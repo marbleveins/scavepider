@@ -280,5 +280,11 @@ public class Scenario {
 	    return SCREENWIDTH;
 	}
 	
+	private int ceil(float v){
+		return Integer.parseInt(String.valueOf( Math.ceil(v) ).substring(0, String.valueOf( Math.ceil(v) ).indexOf(".")));
+	}
+	private int floor(float v){
+		return Integer.parseInt(String.valueOf( Math.floor(v) ).substring(0, String.valueOf( Math.floor(v) ).indexOf(".")));
+	}
 //EOF
 }
