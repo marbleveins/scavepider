@@ -10,5 +10,9 @@ public class Enum {
         JumpingR, JumpingL,
         FallingR, FallingL
     };
+    
+    public enum TipoPixel {
+        CENTRO, TECHO, PISO, IZQ, DER, EsqArrIzq, EsqArrDer, EsqAbIzq, EsqAbDer
+    };
 	
 }

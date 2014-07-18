@@ -11,8 +11,9 @@ import org.newdawn.slick.SlickException;
 public class Game extends BasicGame{
 
 	
-	public static final int WINDOW_WIDTH  = 320;
-    public static final int WINDOW_HEIGTH = 480;
+	public static final int WINDOW_WIDTH  = 640;
+    public static final int WINDOW_HEIGTH = 960;
+    
     public static final String GAME_NAME = "Spcv";
     private Scenario scenario;
     private Player player;
@@ -24,9 +25,10 @@ public class Game extends BasicGame{
 	}
     
 	@Override
-	public void render(GameContainer container, Graphics arg1) throws SlickException {
+	public void render(GameContainer container, Graphics g) throws SlickException {
 		// TODO Auto-generated method stub
-		scenario.render();
+		g.scale(2,2);
+		scenario.render(container, g);
 		player.render();
 	}
 	@Override

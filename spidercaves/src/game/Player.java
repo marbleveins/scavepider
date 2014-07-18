@@ -31,18 +31,19 @@ public class Player{
     protected HashMap<Facing, Animation> aRunning, aStanding, aJumping, aFalling;
     protected long lastTimeMoved;
     private Scenario scenario;
-    
+    private boolean standing = false;
  
     public Player(float x, float y, Scenario _scenario) throws SlickException{
     	this.x = x;
         this.y = y;
         accelX = 0.4f;
         decelX = accelX*4;
-        maxSpeedX = 3;
+        maxSpeedX = 2.5f;
         maxSpeedY = 10;
-        jumpStartSpeedY = 4;
+        jumpStartSpeedY = 4.5f;
         jumping = false;
         jumpKeyDown = false;
+        standing = false;
         
         scenario = _scenario;
         initCollisionPoints();
@@ -120,7 +121,7 @@ public class Player{
     public void handleKeyboardInput(Input i, int delta){
         boolean moveRequest = false;
         if (speedY == 0) jumping = false;
-        
+        // 1 == 1 || 
         if (i.isKeyDown(Input.KEY_A) || i.isKeyDown(Input.KEY_LEFT))
         {
             speedX -= accelX;
@@ -173,10 +174,10 @@ public class Player{
     
     private void initCollisionPoints(){
     	int points[][] = {
-    	        { 13,  5  }, { 17, 5  }, // Top of head
+    	        { 13,  3  }, { 17, 3  }, // Top of head
     	        { 13,  31 }, { 17, 31 }, // Feet
-    	        { 6,  10 }, { 6,  20 }, // Left arm
-    	        { 25, 10 }, { 25, 20 }  // Right arm
+    	        { 6,  8 }, { 6,  25 }, // Left arm
+    	        { 25, 8 }, { 25, 25 }  // Right arm
     	};
     	collisionPoint = points;
     }
@@ -202,194 +203,75 @@ public class Player{
     public void update(GameContainer container, int arg1){
     	Input input = container.getInput();
 		handleKeyboardInput(input, 2);
-		controlCollision2();
+		controlCollision1();
 		y += speedY;
 	    x += speedX;
 	    if (x >= 320-PLAYERSIZE || x <= 0 || y >= 480-PLAYERSIZE || y <= 0) {x = 20;y = 5;}
     }
     
-    private void controlCollision(){
+    private void controlCollision1(){
     	boolean contactX = false, contactYbottom = false, contactYtop = false;//tipo de colision
         float nextMoveX = speedX;
         float nextMoveY = speedY;
-
-        float projectedMoveX, projectedMoveY, originalMoveX, originalMoveY;
-        originalMoveX = nextMoveX;
-        originalMoveY = nextMoveY;
-        float nextCP1, nextCP2;
-        int projectedPosX1UP, projectedPosX2UP, projectedPosY1UP, projectedPosY2UP;
-        int projectedPosX1DOWN, projectedPosX2DOWN, projectedPosY1DOWN, projectedPosY2DOWN;
-        int projectedPosX1LEFT, projectedPosX2LEFT, projectedPosY1LEFT, projectedPosY2LEFT;
-        int projectedPosX1RIGHT, projectedPosX2RIGHT, projectedPosY1RIGHT, projectedPosY2RIGHT;
-        String stringX1, stringX2, stringY1, stringY2;
+        standing = false;
         
-        for (int dir = 0; dir < 4; dir++) {
-            if (dir == 0 && nextMoveY > 0) continue;//0 arr, 1 ab, 2 izq, 3 der
-            if (dir == 1 && nextMoveY < 0) continue;//estos son para que si esta saltando a la derecha
-            if (dir == 2 && nextMoveX > 0) continue;// que checkee colisiones para ese lado solamente
-            if (dir == 3 && nextMoveX < 0) continue;
-            projectedMoveX = (dir >= 2? nextMoveX : 0);
-            projectedMoveY = (dir <  2? nextMoveY : 0);
-            
-            //CORRECCION DE MOVIMIENTO
-            //transformar el float en integer para la colision por pixels.. cambia el floor, ceil y round
-            //UP
-    		projectedPosX1UP = Math.round(collisionPoint[dir*2][0] + x + projectedMoveX);
-    		projectedPosY1UP = ceil(collisionPoint[dir*2][1] + y + projectedMoveY);
-    		projectedPosX2UP = Math.round(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-    		projectedPosY2UP = ceil(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-            //DOWN
-    		projectedPosX1DOWN = Math.round(collisionPoint[dir*2][0] + x + projectedMoveX);
-    		projectedPosY1DOWN = floor(collisionPoint[dir*2][1] + y + projectedMoveY);
-    		projectedPosX2DOWN = Math.round(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-    		projectedPosY2DOWN = floor(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-            //LEFT
-    		projectedPosX1LEFT = ceil(collisionPoint[dir*2][0] + x + projectedMoveX);
-    		projectedPosY1LEFT = Math.round(collisionPoint[dir*2][1] + y + projectedMoveY);
-    		projectedPosX2LEFT = ceil(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-    		projectedPosY2LEFT = Math.round(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-            //RIGHT
-    		projectedPosX1RIGHT = floor(collisionPoint[dir*2][0] + x + projectedMoveX);
-    		projectedPosY1RIGHT = Math.round(collisionPoint[dir*2][1] + y + projectedMoveY);
-    		projectedPosX2RIGHT = floor(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-    		projectedPosY2RIGHT = Math.round(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-    		int pointx1 = 0, pointy1 = 0, pointx2 = 0, pointy2 = 0;
-            if (dir == 0){
-            	pointx1 = projectedPosX1UP;
-            	pointy1 = projectedPosY1UP;
-            	pointx2 = projectedPosX2UP;
-            	pointy2 = projectedPosY2UP;
-            }
-            if (dir == 1){
-            	pointx1 = projectedPosX1DOWN;
-            	pointy1 = projectedPosY1DOWN;
-            	pointx2 = projectedPosX2DOWN;
-            	pointy2 = projectedPosY2DOWN;
-            }
-            if (dir == 2){
-            	pointx1 = projectedPosX1LEFT;
-            	pointy1 = projectedPosY1LEFT;
-            	pointx2 = projectedPosX2LEFT;
-            	pointy2 = projectedPosY2LEFT;
-            }
-            if (dir == 3){
-            	pointx1 = projectedPosX1RIGHT;
-            	pointy1 = projectedPosY1RIGHT;
-            	pointx2 = projectedPosX2RIGHT;
-            	pointy2 = projectedPosY2RIGHT;
-            }
-            
-            //puntos: DIR 0: cabeza 1 y cabeza 2, DIR 1: pie 1 y pie 2  , DIR 2 brazo I 1 y brazo I 2, DIR 3 brazo D 1 y brazo D 2
-            while ( scenario.collides(pointx1, pointy1) || scenario.collides(pointx2, pointy2) )//o punto 2
-            {
-            	//UP
-        		projectedPosX1UP = Math.round(collisionPoint[dir*2][0] + x + projectedMoveX);
-        		projectedPosY1UP = ceil(collisionPoint[dir*2][1] + y + projectedMoveY);
-        		projectedPosX2UP = Math.round(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-        		projectedPosY2UP = ceil(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-                //DOWN
-        		projectedPosX1DOWN = Math.round(collisionPoint[dir*2][0] + x + projectedMoveX);
-        		projectedPosY1DOWN = floor(collisionPoint[dir*2][1] + y + projectedMoveY);
-        		projectedPosX2DOWN = Math.round(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-        		projectedPosY2DOWN = floor(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-                //LEFT
-        		projectedPosX1LEFT = ceil(collisionPoint[dir*2][0] + x + projectedMoveX);
-        		projectedPosY1LEFT = Math.round(collisionPoint[dir*2][1] + y + projectedMoveY);
-        		projectedPosX2LEFT = ceil(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-        		projectedPosY2LEFT = Math.round(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-                //RIGHT
-        		projectedPosX1RIGHT = floor(collisionPoint[dir*2][0] + x + projectedMoveX);
-        		projectedPosY1RIGHT = Math.round(collisionPoint[dir*2][1] + y + projectedMoveY);
-        		projectedPosX2RIGHT = floor(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-        		projectedPosY2RIGHT = Math.round(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-                if (dir == 0){
-                	pointx1 = projectedPosX1UP;
-                	pointy1 = projectedPosY1UP;
-                	pointx2 = projectedPosX2UP;
-                	pointy2 = projectedPosY2UP;
-                }
-                if (dir == 1){
-                	pointx1 = projectedPosX1DOWN;
-                	pointy1 = projectedPosY1DOWN;
-                	pointx2 = projectedPosX2DOWN;
-                	pointy2 = projectedPosY2DOWN;
-                }
-                if (dir == 2){
-                	pointx1 = projectedPosX1LEFT;
-                	pointy1 = projectedPosY1LEFT;
-                	pointx2 = projectedPosX2LEFT;
-                	pointy2 = projectedPosY2LEFT;
-                }
-                if (dir == 3){
-                	pointx1 = projectedPosX1RIGHT;
-                	pointy1 = projectedPosY1RIGHT;
-                	pointx2 = projectedPosX2RIGHT;
-                	pointy2 = projectedPosY2RIGHT;
-                }
-            	
-            	
-                if (dir == 0)//arriba
-                {
-                    nextCP1 = scenario.nextCollisionPointUpwards(projectedPosX1UP, projectedPosY1UP);
-                    nextCP2 = scenario.nextCollisionPointUpwards(projectedPosX2UP, projectedPosY2UP);
-                    
-                    if (nextCP1 >= nextCP2)
-                        projectedMoveY = nextCP1 - (collisionPoint[dir*2][1] + y) + 1;//proyectectado el movimiento necesario para quedar sobre el punto de contacto
-                    else
-                        projectedMoveY = nextCP2 - (collisionPoint[dir*2+1][1] + y) + 1;
-                }
-                if (dir == 1)//abajo
-                {
-                	nextCP1 = scenario.nextCollisionPointDownwards(projectedPosX1DOWN, projectedPosY1DOWN);
-                    nextCP2 = scenario.nextCollisionPointDownwards(projectedPosX2DOWN, projectedPosY2DOWN);
-                    
-                    if (nextCP1 <= nextCP2){
-                        projectedMoveY = nextCP1 - (collisionPoint[dir*2][1] + y) - 1;//proyectectado el movimiento necesario para quedar sobre el punto de contacto
-                    }else{
-                        projectedMoveY = nextCP2 - (collisionPoint[dir*2+1][1] + y) - 1;
-                    }
-                }
-                if (dir == 2)//izquierda
-                {
-                	nextCP1 = scenario.nextCollisionPointLeftwards(projectedPosX1LEFT, projectedPosY1LEFT);
-					nextCP2 = scenario.nextCollisionPointLeftwards(projectedPosX2LEFT, projectedPosY2LEFT);
-					
-					if (nextCP1 >= nextCP2)
-						projectedMoveX = nextCP1 - (collisionPoint[dir*2][0] + x) + 1;//proyectectado el movimiento necesario para quedar sobre el punto de contacto
-					else
-						projectedMoveX = nextCP2 - (collisionPoint[dir*2+1][0] + x) + 1;
-                }
-                if (dir == 3)//derecha
-                {
-                	nextCP1 = scenario.nextCollisionPointRightwards(projectedPosX1RIGHT, projectedPosY1RIGHT);
-					nextCP2 = scenario.nextCollisionPointRightwards(projectedPosX2RIGHT, projectedPosY2RIGHT);
-					
-					if (nextCP1 <= nextCP2)
-						projectedMoveX = nextCP1 - (collisionPoint[dir*2][0] + x) - 1;//proyectectado el movimiento necesario para quedar sobre el punto de contacto
-					else
-						projectedMoveX = nextCP2 - (collisionPoint[dir*2+1][0] + x) - 1;
-                }
-            }
-
-
-            if (dir >= 2 && dir <= 3) nextMoveX = projectedMoveX;
-            if (dir >= 0 && dir <= 1) nextMoveY = projectedMoveY;
+        float projectedMoveX, projectedMoveY;
+        projectedMoveX = 0;
+        projectedMoveY = 0;
+        
+      //CORRECCION DE MOVIMIENTO
+        //puntos: DIR 0: cabeza 1 y cabeza 2, DIR 1: pie 1 y pie 2  , DIR 2 brazo I 1 y brazo I 2, DIR 3 brazo D 1 y brazo D 2
+        float vectorLength = (float) Math.sqrt(nextMoveX * nextMoveX + nextMoveY * nextMoveY);
+        for (float segment=0; segment <= vectorLength; segment++){
+        	projectedMoveX += nextMoveX / vectorLength;
+        	projectedMoveY += nextMoveY / vectorLength;
+        	if (modulo(projectedMoveX) > modulo(nextMoveX))
+        		projectedMoveX = nextMoveX;
+        	if (modulo(projectedMoveY) > modulo(nextMoveY))
+        		projectedMoveY = nextMoveY;
+	        if ( colisionaAlgoConTerreno(projectedMoveX, projectedMoveY) )
+	        {
+	        	//probar con whiles en vez de ifs
+	        	if ( colisionaUnBrazoIzquierdo(projectedMoveX, projectedMoveY) ){
+	        		if ( modulo(nextMoveX / vectorLength) > nextMoveX )
+	        			projectedMoveX -= nextMoveX;
+	        		else
+	        			projectedMoveX += (nextMoveX / vectorLength != 0)?modulo(nextMoveX / vectorLength):1;
+	        			
+	        		contactX = true;
+	        	}
+	        	if ( colisionaUnBrazoDerecho(projectedMoveX, projectedMoveY) ){
+	        		if ( modulo(nextMoveX / vectorLength) > nextMoveX )
+	        			projectedMoveX -= nextMoveX;
+	        		else
+	        			projectedMoveX -= (nextMoveX / vectorLength != 0)?modulo(nextMoveX / vectorLength):1;
+	        			
+	        		contactX = true;
+	        	}
+	        	if ( colisionaUnPie(projectedMoveX, projectedMoveY) ){
+	        		if ( modulo(nextMoveY / vectorLength) > nextMoveY )
+	        			projectedMoveY -= nextMoveY;
+	        		else
+	        			projectedMoveY -= (nextMoveY / vectorLength != 0)?modulo(nextMoveY / vectorLength):1;
+	        		
+        			contactYbottom = true;
+                    standing = true;
+	        	}
+	        	if ( colisionaUnaCabeza(projectedMoveX, projectedMoveY) ){
+	        		if ( modulo(nextMoveY / vectorLength) > nextMoveY )
+	        			projectedMoveY -= nextMoveY;
+	        		else
+	        			projectedMoveY += (nextMoveY / vectorLength != 0)?modulo(nextMoveY / vectorLength):1;
+	        		
+	        			contactYtop = true;
+	        	}
+	        }
+	        	
         }
-        
+        nextMoveX = projectedMoveX;
+        nextMoveY = projectedMoveY;
         //MOVIMIENTO CORREGIDO
-        //tipo de colision
-        if (nextMoveY > originalMoveY && originalMoveY < 0)
-        {
-            contactYtop = true;
-        }
-        if (nextMoveY < originalMoveY && originalMoveY > 0)
-        {
-            contactYbottom = true;
-        }
-        if (Math.abs(nextMoveX - originalMoveX) > 0.01f)
-        {
-            contactX = true;
-        }
+        
         //que caiga si esta saltando y choca con techo
         if (contactX && contactYtop && speedY < 0)
             speedY = nextMoveY = 0;
@@ -402,7 +284,8 @@ public class Player{
             if (contactYbottom)
                 jumping = false;
         }
-
+        if (speedY == 0)
+        	jumping = false;
         if (contactX)
         {
             x += nextMoveX;
@@ -414,85 +297,27 @@ public class Player{
     	boolean contactX = false, contactYbottom = false, contactYtop = false;//tipo de colision
         float nextMoveX = speedX;
         float nextMoveY = speedY;
-
+        
         float projectedMoveX, projectedMoveY, originalMoveX, originalMoveY;
         originalMoveX = nextMoveX;
         originalMoveY = nextMoveY;
-        
+        projectedMoveX = 0;
+        projectedMoveY = 0;
         for (int dir = 0; dir < 4; dir++) {
-            if (dir == 0 && nextMoveY > 0) continue;//0 arr, 1 ab, 2 izq, 3 der
-            if (dir == 1 && nextMoveY < 0) continue;//estos son para que si esta saltando a la derecha
-            if (dir == 2 && nextMoveX > 0) continue;// que checkee colisiones para ese lado solamente
-            if (dir == 3 && nextMoveX < 0) continue;
-            projectedMoveX = 0;
-            projectedMoveY = 0;
+            if (dir == 0 && nextMoveY >= 0) continue;//0 arr, 1 ab, 2 izq, 3 der
+            if (dir == 1 && nextMoveY <= 0) continue;//estos son para que si esta saltando a la derecha
+            if (dir == 2 && nextMoveX >= 0) continue;// que checkee colisiones para ese lado solamente
+            if (dir == 3 && nextMoveX <= 0) continue;
             
-            //CORRECCION DE MOVIMIENTO
-            //transformar el float en integer para la colision por pixels.. cambia el floor, ceil y round
-    		int correnctedPx1 = 0, correctedPy1 = 0, correctedPx2 = 0, correctedPy2 = 0;
-            if (dir == 0){
-            	correnctedPx1 = Math.round(collisionPoint[dir*2][0] + x + projectedMoveX);
-            	correctedPy1 = ceil(collisionPoint[dir*2][1] + y + projectedMoveY);
-            	correctedPx2 = Math.round(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-            	correctedPy2 = ceil(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-            }
-            if (dir == 1){
-            	correnctedPx1 = Math.round(collisionPoint[dir*2][0] + x + projectedMoveX);
-            	correctedPy1 = floor(collisionPoint[dir*2][1] + y + projectedMoveY);
-            	correctedPx2 = Math.round(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-            	correctedPy2 = floor(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-            }
-            if (dir == 2){
-            	correnctedPx1 = ceil(collisionPoint[dir*2][0] + x + projectedMoveX);
-            	correctedPy1 = Math.round(collisionPoint[dir*2][1] + y + projectedMoveY);
-            	correctedPx2 = ceil(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-            	correctedPy2 = Math.round(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-            }
-            if (dir == 3){
-            	correnctedPx1 = floor(collisionPoint[dir*2][0] + x + projectedMoveX);
-            	correctedPy1 = Math.round(collisionPoint[dir*2][1] + y + projectedMoveY);
-            	correctedPx2 = floor(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-            	correctedPy2 = Math.round(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-            }
-            
-            /*
-             // Iterate over each object whose bounding box intersects with the player's bounding box
-			// until a collision is found
-			for (auto it = boundObjects.begin(); it != boundObjects.end() && !contactX && !contactYbottom && !contactYtop; it++)
-			{
-             */
             float vectorLength = (float) Math.sqrt(nextMoveX * nextMoveX + nextMoveY * nextMoveY);
             int segments = 0;
-            while ( !scenario.collides(correnctedPx1, correctedPy1) && !scenario.collides(correctedPx2, correctedPy2 ) && segments < vectorLength )
+            while ( (!scenario.collides(collisionPoint[dir*2][0] + x + projectedMoveX, collisionPoint[dir*2][1] + y + projectedMoveY) 
+            		|| !scenario.collides(collisionPoint[dir*2+1][0] + x + projectedMoveX, collisionPoint[dir*2+1][1] + y + projectedMoveY) ) 
+            		&& segments < vectorLength )
             {
             	projectedMoveX += nextMoveX / vectorLength;
                 projectedMoveY += nextMoveY / vectorLength;
                 segments++;
-                
-                if (dir == 0){
-                	correnctedPx1 = Math.round(collisionPoint[dir*2][0] + x + projectedMoveX);
-                	correctedPy1 = ceil(collisionPoint[dir*2][1] + y + projectedMoveY);
-                	correctedPx2 = Math.round(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-                	correctedPy2 = ceil(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-                }
-                if (dir == 1){
-                	correnctedPx1 = Math.round(collisionPoint[dir*2][0] + x + projectedMoveX);
-                	correctedPy1 = floor(collisionPoint[dir*2][1] + y + projectedMoveY);
-                	correctedPx2 = Math.round(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-                	correctedPy2 = floor(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-                }
-                if (dir == 2){
-                	correnctedPx1 = ceil(collisionPoint[dir*2][0] + x + projectedMoveX);
-                	correctedPy1 = Math.round(collisionPoint[dir*2][1] + y + projectedMoveY);
-                	correctedPx2 = ceil(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-                	correctedPy2 = Math.round(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-                }
-                if (dir == 3){
-                	correnctedPx1 = floor(collisionPoint[dir*2][0] + x + projectedMoveX);
-                	correctedPy1 = Math.round(collisionPoint[dir*2][1] + y + projectedMoveY);
-                	correctedPx2 = floor(collisionPoint[dir*2+1][0] + x + projectedMoveX);
-                	correctedPy2 = Math.round(collisionPoint[dir*2+1][1] + y + projectedMoveY);
-                }
             }
             
             // If an intersection occurred...
@@ -510,7 +335,6 @@ public class Player{
                 if (dir >= 0 && dir <= 1) nextMoveY = projectedMoveY;
             }
         }
-        
         //MOVIMIENTO CORREGIDO
         //tipo de colision
         if (nextMoveY > originalMoveY && originalMoveY < 0)
@@ -520,7 +344,10 @@ public class Player{
         if (nextMoveY < originalMoveY && originalMoveY > 0)
         {
             contactYbottom = true;
+            standing = true;
         }
+        else
+        	standing = false;
         if (Math.abs(nextMoveX - originalMoveX) > 0.01f)
         {
             contactX = true;
@@ -550,6 +377,44 @@ public class Player{
 	}
 	private int floor(float v){
 		return Integer.parseInt(String.valueOf( Math.floor(v) ).substring(0, String.valueOf( Math.floor(v) ).indexOf(".")));
+	}
+	private float modulo(float v){
+		if (v >= 0)
+			return v;
+		else
+			return -1*v;
+	}
+	private boolean colisionaAlgoConTerreno(float xAdd, float yAdd){
+		for (int dir=0;dir<=3;dir++){
+			if (scenario.collides(collisionPoint[dir*2][0] + x + xAdd, collisionPoint[dir*2][1] + y + yAdd)
+				|| scenario.collides(collisionPoint[dir*2+1][0] + x + xAdd, collisionPoint[dir*2+1][1] + y + yAdd ) )
+				return true;
+		}
+		return false;
+	}
+	private boolean colisionaUnBrazoIzquierdo(float xAdd, float yAdd){
+		if (scenario.collides(collisionPoint[4][0] + x + xAdd, collisionPoint[4][1] + y + yAdd)
+			|| scenario.collides(collisionPoint[5][0] + x + xAdd, collisionPoint[5][1] + y + yAdd ) )
+			return true;
+		return false;
+	}
+	private boolean colisionaUnBrazoDerecho(float xAdd, float yAdd){
+		if (scenario.collides(collisionPoint[6][0] + x + xAdd, collisionPoint[6][1] + y + yAdd)
+			|| scenario.collides(collisionPoint[7][0] + x + xAdd, collisionPoint[7][1] + y + yAdd ) )
+			return true;
+		return false;
+	}
+	private boolean colisionaUnPie(float xAdd, float yAdd){
+		if (scenario.collides(collisionPoint[2][0] + x + xAdd, collisionPoint[2][1] + y + yAdd)
+			|| scenario.collides(collisionPoint[3][0] + x + xAdd, collisionPoint[3][1] + y + yAdd ) )
+			return true;
+		return false;
+	}
+	private boolean colisionaUnaCabeza(float xAdd, float yAdd){
+		if (scenario.collides(collisionPoint[0][0] + x + xAdd, collisionPoint[0][1] + y + yAdd)
+			|| scenario.collides(collisionPoint[1][0] + x + xAdd, collisionPoint[1][1] + y + yAdd ) )
+			return true;
+		return false;
 	}
 //EOF
 }

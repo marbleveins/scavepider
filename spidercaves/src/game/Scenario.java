@@ -1,11 +1,15 @@
 package game;
 
+import game.Enum.TipoPixel;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.Vector;
 
+import org.newdawn.slick.GameContainer;
+import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Image;
 import org.newdawn.slick.SlickException;
 
@@ -18,7 +22,7 @@ public class Scenario {
 	public float gravity;
 	public Vector<String[]> tilesMap;
 	public Vector<Image> tiles;
-	public HashMap<Integer, HashMap<Integer, Integer>> collisionPoints;
+	public HashMap<Integer, HashMap<Integer, TipoPixel>> collisionPoints;
 	
 	public Scenario(String _levelName) throws FileNotFoundException, SlickException{
 		levelName = _levelName;
@@ -48,7 +52,7 @@ public class Scenario {
 	
 	private Vector<Image> getTiles() throws SlickException{
 		Vector<Image> result = new Vector<Image>();
-		Image tilesFile = new Image("data/maps/" + levelName + ".png");
+		Image tilesFile = new Image("data/maps/" + levelName + ".png", false, Image.FILTER_NEAREST);
 		//Graphics fileG = tilesFile.getGraphics();
 		int fileLines = tilesFile.getHeight()/TILESIZE;
         int fileColumns = tilesFile.getWidth()/TILESIZE;
@@ -83,12 +87,12 @@ public class Scenario {
 		return result;
 	}
 	
-	private HashMap<Integer, HashMap<Integer, Integer>> getCollisionPoints(){
+	private HashMap<Integer, HashMap<Integer, TipoPixel>> getCollisionPoints(){
 		/**
 	    *   uno para cada tipo de tile? no jodas, RE-IMPLEMENTAR
 	    *   tiles por tipo, clases
 	    **/
-		HashMap<Integer, HashMap<Integer, Integer>> result = new HashMap<Integer, HashMap<Integer, Integer>>();;
+		HashMap<Integer, HashMap<Integer, TipoPixel>> result = new HashMap<Integer, HashMap<Integer, TipoPixel>>();;
 	    for (int l=0; l < tilesMap.size(); l++)
 	    {
 	        for (int c=0; c < tilesMap.elementAt(l).length; c++)
@@ -102,8 +106,8 @@ public class Scenario {
 	                    for (int y=0; y < TILESIZE; y++)
 	                    {
 	                        if (result.get(x+(c*TILESIZE)) == null)
-	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, Integer>());
-	                        result.get(x+(c*TILESIZE)).put(y+(l*TILESIZE), 1);
+	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, TipoPixel>());
+	                        result.get( x+(c*TILESIZE) ).put( y+(l*TILESIZE), getTipoPx(x, y, tilesMap.elementAt(l)[c]) );
 	                    }
 	                }
 
@@ -116,67 +120,35 @@ public class Scenario {
 	                    for (int y=11; y < TILESIZE; y++)
 	                    {
 	                    	if (result.get(x+(c*TILESIZE)) == null)
-	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, Integer>());
-	                        result.get(x+(c*TILESIZE)).put(y+(l*TILESIZE), 1);
-	                    }
-	                }
-	            }
-	            //tiles de pared delante
-	            if ( tilesMap.elementAt(l)[c].matches("08"))
-	            {
-	                for (int x=8; x < TILESIZE; x++)
-	                {
-	                    for (int y=0; y < 8; y++)
-	                    {
-	                    	if (result.get(x+(c*TILESIZE)) == null)
-	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, Integer>());
-	                        result.get(x+(c*TILESIZE)).put(y+(l*TILESIZE), 1);
+	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, TipoPixel>());
+	                        result.get( x+(c*TILESIZE) ).put( y+(l*TILESIZE), getTipoPx(x, y, tilesMap.elementAt(l)[c]) );
 	                    }
 	                }
 	            }
 	            //tiles esquinero derecha abajo
 	            if ( tilesMap.elementAt(l)[c].matches("03"))
 	            {
+	                for (int x=0; x < TILESIZE; x++)
+	                {
+	                    for (int y=11; y < TILESIZE; y++)
+	                    {
+	                    	if (result.get(x+(c*TILESIZE)) == null)
+	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, TipoPixel>());
+	                    	result.get( x+(c*TILESIZE) ).put( y+(l*TILESIZE), getTipoPx(x, y, tilesMap.elementAt(l)[c]) );
+	                    }
+	                }
+	                //son 2 porque la forma es una 'L' espejada
 	                for (int x=8; x < TILESIZE; x++)
 	                {
-	                    for (int y=11; y < TILESIZE; y++)
+	                    for (int y=0; y < TILESIZE; y++)
 	                    {
 	                    	if (result.get(x+(c*TILESIZE)) == null)
-	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, Integer>());
-	                        result.get(x+(c*TILESIZE)).put(y+(l*TILESIZE), 1);
+	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, TipoPixel>());
+	                    	result.get( x+(c*TILESIZE) ).put( y+(l*TILESIZE), getTipoPx(x, y, tilesMap.elementAt(l)[c]) );
 	                    }
 	                }
 
 	            }
-	            //tiles esquina caida derecha abajo
-	            if ( tilesMap.elementAt(l)[c].matches("07"))
-	            {
-	                for (int x=0; x < 8; x++)
-	                {
-	                    for (int y=11; y < TILESIZE; y++)
-	                    {
-	                    	if (result.get(x+(c*TILESIZE)) == null)
-	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, Integer>());
-	                        result.get(x+(c*TILESIZE)).put(y+(l*TILESIZE), 1);
-	                    }
-	                }
-
-	            }
-	            //tiles de esquina caida izquierda abajo
-	            if ( tilesMap.elementAt(l)[c].matches("05") || tilesMap.elementAt(l)[c].matches("06"))
-	            {
-	                for (int x=8; x < TILESIZE; x++)
-	                {
-	                    for (int y=11; y < TILESIZE; y++)
-	                    {
-	                    	if (result.get(x+(c*TILESIZE)) == null)
-	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, Integer>());
-	                        result.get(x+(c*TILESIZE)).put(y+(l*TILESIZE), 1);
-	                    }
-	                }
-
-	            }
-	            //tiles de pared derecha - cuack, leer Solidos
 	            //tiles de pared izquierda
 	            if ( tilesMap.elementAt(l)[c].matches("04"))
 	            {
@@ -185,18 +157,61 @@ public class Scenario {
 	                    for (int y=0; y < TILESIZE; y++)
 	                    {
 	                    	if (result.get(x+(c*TILESIZE)) == null)
-	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, Integer>());
-	                        result.get(x+(c*TILESIZE)).put(y+(l*TILESIZE), 1);
+	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, TipoPixel>());
+	                    	result.get( x+(c*TILESIZE) ).put( y+(l*TILESIZE), getTipoPx(x, y, tilesMap.elementAt(l)[c]) );
 	                    }
 	                }
 
+	            }
+	            //tiles de esquina caida izquierda abajo
+	            if ( tilesMap.elementAt(l)[c].matches("05"))
+	            {
+	                for (int x=8; x < TILESIZE; x++)
+	                {
+	                    for (int y=11; y < TILESIZE; y++)
+	                    {
+	                    	if (result.get(x+(c*TILESIZE)) == null)
+	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, TipoPixel>());
+	                    	result.get( x+(c*TILESIZE) ).put( y+(l*TILESIZE), getTipoPx(x, y, tilesMap.elementAt(l)[c]) );
+	                    }
+	                }
+
+	            }
+	            //tiles de pared derecha - cuack, leer Solidos
+	            
+	            //tiles esquina caida derecha abajo
+	            if ( tilesMap.elementAt(l)[c].matches("07"))
+	            {
+	                for (int x=0; x < 8; x++)
+	                {
+	                    for (int y=11; y < TILESIZE; y++)
+	                    {
+	                    	if (result.get(x+(c*TILESIZE)) == null)
+	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, TipoPixel>());
+	                    	result.get( x+(c*TILESIZE) ).put( y+(l*TILESIZE), getTipoPx(x, y, tilesMap.elementAt(l)[c]) );
+	                    }
+	                }
+
+	            }
+	            //tiles de pared delante
+	            if ( tilesMap.elementAt(l)[c].matches("08"))
+	            {
+	                for (int x=8; x < TILESIZE; x++)
+	                {
+	                    for (int y=0; y < 12; y++)
+	                    {
+	                    	if (result.get(x+(c*TILESIZE)) == null)
+	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, TipoPixel>());
+	                    	result.get( x+(c*TILESIZE) ).put( y+(l*TILESIZE), getTipoPx(x, y, tilesMap.elementAt(l)[c]) );
+	                    }
+	                }
 	            }
 	        }
 	    }
 	    return result;
 	}
 
-	public void render(){
+	public void render(GameContainer container, Graphics g){
 	    for (int y=1 ; y<=tilesMap.size() ; y++)
 	    {
 	        for (int x=1 ; x<=tilesMap.elementAt(y-1).length ; x++)
@@ -209,75 +224,10 @@ public class Scenario {
 	
 	public boolean collides(float x, float y)
 	{
-		//tiene que llegar integer
-		String realX = String.valueOf(Math.ceil(x));
-		String realY = String.valueOf(Math.ceil(y));
-		realX = realX.substring(0, realX.indexOf("."));
-		realY = realY.substring(0, realY.indexOf("."));
-	    if (collisionPoints.containsKey(Integer.parseInt(realX)) == true && collisionPoints.get(Integer.parseInt(realX)).get(Integer.parseInt(realY)) != null)
+		//floor porque es por pixels y el pixel 5 es del 5.0 hasta el 5.9
+	    if (collisionPoints.containsKey(floor(x)) == true && collisionPoints.get(floor(x)).get(floor(y)) != null)
 	        return true;//esto deberia ser re poco costoso por ser un hashmap, no?
 	    return false;
-	}
-
-	public float nextCollisionPointDownwards(float x, float y)
-	{
-		String stringX = String.valueOf(Math.round(x));
-		String stringYfloored = String.valueOf(Math.floor(y));
-		stringYfloored = stringYfloored.substring(0, stringYfloored.indexOf("."));
-		int intX = Integer.parseInt(stringX);//rounded
-		int intYfloored = Integer.parseInt(stringYfloored);
-		//ESTO ES PORQUE LOS PUNTOS DE COLISION EN EL HASHMAP SON INTEGER (PIXELS)
-		//SI HAY COLISION EN EL PUNTO 7, EN EL 7.5 TAMBIEN.....no?
-	    for (int i = intYfloored; i < SCREENHEIGHT; i++) {
-	        if ( collides(intX, i) )
-	            return i;
-	    }
-	    return SCREENHEIGHT;
-	}
-	public float nextCollisionPointUpwards(float x, float y)
-	{
-		String stringX = String.valueOf(Math.round(x));
-		String stringYceiled = String.valueOf(Math.ceil(y));
-		stringYceiled = stringYceiled.substring(0, stringYceiled.indexOf("."));
-		int intX = Integer.parseInt(stringX);//rounded
-		int intYceiled = Integer.parseInt(stringYceiled);
-		//ESTO ES PORQUE LOS PUNTOS DE COLISION EN EL HASHMAP SON INTEGER (PIXELS)
-		//SI HAY COLISION EN EL PUNTO 7, EN EL 7.5 TAMBIEN.....no?
-	    for (int i = intYceiled; i > 0; i--) {
-	        if ( collides(intX, i) )
-	            return i;
-	    }
-	    return 0;
-	}
-	public float nextCollisionPointLeftwards(float x, float y)
-	{
-		String stringXceiled = String.valueOf(Math.ceil(x));
-		String stringY = String.valueOf(Math.round(y));
-		stringXceiled = stringXceiled.substring(0, stringXceiled.indexOf("."));
-		int intXceiled = Integer.parseInt(stringXceiled);//rounded
-		int intY = Integer.parseInt(stringY);
-		//ESTO ES PORQUE LOS PUNTOS DE COLISION EN EL HASHMAP SON INTEGER (PIXELS)
-		//SI HAY COLISION EN EL PUNTO 7, EN EL 7.5 TAMBIEN.....no?
-	    for (int i = intXceiled; i > 0; i--) {
-	        if ( collides(i, intY) )
-	            return i;
-	    }
-	    return 0;
-	}
-	public float nextCollisionPointRightwards(float x, float y)
-	{
-		String stringXfloored = String.valueOf(Math.floor(x));
-		String stringY = String.valueOf(Math.round(y));
-		stringXfloored = stringXfloored.substring(0, stringXfloored.indexOf("."));
-		int intXfloored = Integer.parseInt(stringXfloored);//rounded
-		int intY = Integer.parseInt(stringY);
-		//ESTO ES PORQUE LOS PUNTOS DE COLISION EN EL HASHMAP SON INTEGER (PIXELS)
-		//SI HAY COLISION EN EL PUNTO 7, EN EL 7.5 TAMBIEN.....no?
-	    for (int i = intXfloored; i < SCREENWIDTH; i++) {
-	        if ( collides(i, intY) )
-	            return i;
-	    }
-	    return SCREENWIDTH;
 	}
 	
 	private int ceil(float v){
@@ -285,6 +235,61 @@ public class Scenario {
 	}
 	private int floor(float v){
 		return Integer.parseInt(String.valueOf( Math.floor(v) ).substring(0, String.valueOf( Math.floor(v) ).indexOf(".")));
+	}
+	
+	private TipoPixel getTipoPx(int x, int y, String tile ){
+		switch (tile){
+		case "01":
+			if (x == TILESIZE/2)
+				return TipoPixel.DER;
+			break;
+		case "02":
+			if (y == 11)
+				return TipoPixel.PISO;
+			break;
+		case "03":
+			if (x == TILESIZE/2 && y == 11)
+				return TipoPixel.EsqAbDer;
+			else if (x == TILESIZE/2 && y < 11)
+				return TipoPixel.IZQ;
+			else if (x < TILESIZE/2 && y == 11)
+				return TipoPixel.PISO;
+			break;
+		case "04":
+			if (x == TILESIZE/2)
+				return TipoPixel.IZQ;
+			break;
+		case "05":
+			if (x == TILESIZE/2 && y == 11)
+				return TipoPixel.EsqArrIzq;
+			else if (x > TILESIZE/2 && y == 11)
+				return TipoPixel.PISO;
+			else if (x == TILESIZE/2 && y > 11)
+				return TipoPixel.IZQ;
+			break;
+		case "06":
+			//ni idea este no se usa
+			break;
+		case "07":
+			if (x == TILESIZE/2 && y == 11)
+				return TipoPixel.EsqArrDer;
+			else if (x < TILESIZE/2 && y == 11)
+				return TipoPixel.PISO;
+			else if (x == TILESIZE/2 && y > 11)
+				return TipoPixel.DER;
+			break;
+		case "08":
+			if (x == TILESIZE/2 && y == 11)
+				return TipoPixel.EsqAbIzq;
+			else if (x > TILESIZE/2 && y == 11)
+				return TipoPixel.TECHO;
+			else if (x == TILESIZE/2 && y < 11)
+				return TipoPixel.IZQ;
+			break;
+		}
+		
+		//si no es de los bordes
+		return TipoPixel.CENTRO;
 	}
 //EOF
 }
