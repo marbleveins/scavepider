@@ -6,13 +6,16 @@ import org.newdawn.slick.AppGameContainer;
 import org.newdawn.slick.BasicGame;
 import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.Graphics;
+import org.newdawn.slick.Input;
 import org.newdawn.slick.SlickException;
 
 public class Game extends BasicGame{
 
 	
-	public static final int WINDOW_WIDTH  = 640;
-    public static final int WINDOW_HEIGTH = 960;
+	public static final int WINDOW_WIDTH  = 320;
+    public static final int WINDOW_HEIGTH = 480;
+    private int scale = 1;
+    private boolean scaleChanged;
     
     public static final String GAME_NAME = "Spcv";
     private Scenario scenario;
@@ -27,7 +30,11 @@ public class Game extends BasicGame{
 	@Override
 	public void render(GameContainer container, Graphics g) throws SlickException {
 		// TODO Auto-generated method stub
-		g.scale(2,2);
+		if (scaleChanged == true){
+			scaleChanged = false;
+	        ((AppGameContainer) container).setDisplayMode(WINDOW_WIDTH*scale, WINDOW_HEIGTH*scale, false);
+		}
+		if (scale != 1) g.scale(scale,scale);
 		scenario.render(container, g);
 		player.render();
 	}
@@ -40,12 +47,21 @@ public class Game extends BasicGame{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		scaleChanged = false;
 		player = new Player(87, 5, scenario);
 	}
 	@Override
 	public void update(GameContainer container, int arg1) throws SlickException {
 		// TODO Auto-generated method stub
 		player.update(container, arg1);
+		if ( container.getInput().isKeyDown(Input.KEY_1) ) {
+			scale = 1;
+			scaleChanged = true;
+        }
+		if ( container.getInput().isKeyDown(Input.KEY_2) ) {
+			scale = 2;
+			scaleChanged = true;
+        }
 	}
     
 	public static void main(String[] args) throws SlickException {
