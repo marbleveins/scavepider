@@ -6,6 +6,7 @@ import org.newdawn.slick.AppGameContainer;
 import org.newdawn.slick.BasicGame;
 import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.Graphics;
+import org.newdawn.slick.Image;
 import org.newdawn.slick.Input;
 import org.newdawn.slick.SlickException;
 
@@ -14,9 +15,9 @@ public class Game extends BasicGame{
 	
 	public static final int WINDOW_WIDTH  = 320;
     public static final int WINDOW_HEIGTH = 480;
-    private int scale = 1;
+    private int SCALE = 1;
     private boolean scaleChanged;
-    
+    private Image screen;
     public static final String GAME_NAME = "Spcv";
     private Scenario scenario;
     private Player player;
@@ -30,24 +31,28 @@ public class Game extends BasicGame{
 	@Override
 	public void render(GameContainer container, Graphics g) throws SlickException {
 		// TODO Auto-generated method stub
+		Graphics screenG = screen.getGraphics();
 		if (scaleChanged == true){
 			scaleChanged = false;
-	        ((AppGameContainer) container).setDisplayMode(WINDOW_WIDTH*scale, WINDOW_HEIGTH*scale, false);
+	        ((AppGameContainer) container).setDisplayMode(WINDOW_WIDTH*SCALE, WINDOW_HEIGTH*SCALE, false);
 		}
-		if (scale != 1) g.scale(scale,scale);
-		scenario.render(container, g);
-		player.render();
+		scenario.render(container, g, screenG);
+		player.render(screenG);
+		screenG.flush();
+		screen.draw(0,0, SCALE);
 	}
 	@Override
 	public void init(GameContainer container) throws SlickException {
 		// TODO Auto-generated method stub
+		screen = new Image(WINDOW_WIDTH, WINDOW_HEIGTH);
+		scaleChanged = false;
+		
 		try {
 			scenario = new Scenario("map1");
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		scaleChanged = false;
 		player = new Player(87, 5, scenario);
 	}
 	@Override
@@ -55,11 +60,11 @@ public class Game extends BasicGame{
 		// TODO Auto-generated method stub
 		player.update(container, arg1);
 		if ( container.getInput().isKeyDown(Input.KEY_1) ) {
-			scale = 1;
+			SCALE = 1;
 			scaleChanged = true;
         }
 		if ( container.getInput().isKeyDown(Input.KEY_2) ) {
-			scale = 2;
+			SCALE = 2;
 			scaleChanged = true;
         }
 	}

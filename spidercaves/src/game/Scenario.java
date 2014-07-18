@@ -211,13 +211,14 @@ public class Scenario {
 	    return result;
 	}
 
-	public void render(GameContainer container, Graphics g){
+	public void render(GameContainer container, Graphics g, Graphics screenG){
 	    for (int y=1 ; y<=tilesMap.size() ; y++)
 	    {
 	        for (int x=1 ; x<=tilesMap.elementAt(y-1).length ; x++)
 	        {
 	        	Image tile = tiles.elementAt(Integer.parseInt( (tilesMap.elementAt(y-1)[x-1]) ));
-	            tile.draw((x-1)*TILESIZE, (y-1)*TILESIZE);
+	            //tile.draw((x-1)*TILESIZE, (y-1)*TILESIZE);
+	            screenG.drawImage(tile, (x-1)*TILESIZE, (y-1)*TILESIZE);
 	        }
 	    }
 	}

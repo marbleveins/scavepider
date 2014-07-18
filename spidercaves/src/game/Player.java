@@ -67,14 +67,17 @@ public class Player{
 	    sprites.put(Facing.LEFT , i.getFlippedCopy(true, false));
 	}
 	
-    public void render(){
+    public void render(Graphics screenG){
     	if (jumping){
-    		aJumping.get(facing).draw(x, y);
+    		//aJumping.get(facing).draw(x, y);
+    		screenG.drawAnimation(aJumping.get(facing), x, y);
     	}
     	else if(aRunning != null && lastTimeMoved+150 > System.currentTimeMillis()){
-            aRunning.get(facing).draw(x,y);
+            //aRunning.get(facing).draw(x,y);
+            screenG.drawAnimation(aRunning.get(facing), x, y);
         }else{            
             sprites.get(facing).draw(x, y);
+            screenG.drawImage(sprites.get(facing), x, y);
         }
     }
     
@@ -203,13 +206,92 @@ public class Player{
     public void update(GameContainer container, int arg1){
     	Input input = container.getInput();
 		handleKeyboardInput(input, 2);
-		controlCollision1();
+		controlCollision2();
 		y += speedY;
 	    x += speedX;
 	    if (x >= 320-PLAYERSIZE || x <= 0 || y >= 480-PLAYERSIZE || y <= 0) {x = 20;y = 5;}
     }
     
     private void controlCollision1(){
+    	boolean contactX = false, contactYbottom = false, contactYtop = false;//tipo de colision
+        float nextMoveX = speedX;
+        float nextMoveY = speedY;
+        standing = false;
+        
+        float projectedMoveX, projectedMoveY;
+        projectedMoveX = 0;
+        projectedMoveY = 0;
+        
+      //CORRECCION DE MOVIMIENTO
+        //puntos: DIR 0: cabeza 1 y cabeza 2, DIR 1: pie 1 y pie 2  , DIR 2 brazo I 1 y brazo I 2, DIR 3 brazo D 1 y brazo D 2
+        float vectorLength = (float) Math.sqrt(nextMoveX * nextMoveX + nextMoveY * nextMoveY);
+        for (float segment=0; segment <= vectorLength; segment++){
+        	projectedMoveX += nextMoveX / vectorLength;
+        	projectedMoveY += nextMoveY / vectorLength;
+        	if (modulo(projectedMoveX) > modulo(nextMoveX))
+        		projectedMoveX = nextMoveX;
+        	if (modulo(projectedMoveY) > modulo(nextMoveY))
+        		projectedMoveY = nextMoveY;
+	        if ( colisionaAlgoConTerreno(projectedMoveX, projectedMoveY) )
+	        {
+	        	//probar con whiles en vez de ifs
+	        	if ( colisionaUnBrazoIzquierdo(projectedMoveX, projectedMoveY) ){
+	        		contactX = true;
+	        	}
+	        	if ( colisionaUnBrazoDerecho(projectedMoveX, projectedMoveY) ) {
+	        		contactX = true;
+	        	}
+	        	if ( colisionaUnPie(projectedMoveX, projectedMoveY) ){
+        			contactYbottom = true;
+                    standing = true;
+	        	}
+	        	if ( colisionaUnaCabeza(projectedMoveX, projectedMoveY) ){
+	        		contactYtop = true;
+	        	}
+	        	
+	        	/*if ( modulo(nextMoveY / vectorLength) > nextMoveY )
+        			projectedMoveY -= nextMoveY;
+        		else
+        			projectedMoveY -= (nextMoveY / vectorLength != 0)?modulo(nextMoveY / vectorLength):1;
+        			
+	        	if ( modulo(nextMoveX / vectorLength) > nextMoveX )
+        			projectedMoveX -= nextMoveX;
+        		else
+        			projectedMoveX -= (nextMoveX / vectorLength != 0)?nextMoveX / vectorLength:1;
+        		*/
+	        	projectedMoveY -= nextMoveY / vectorLength;
+	        	projectedMoveX -= nextMoveX / vectorLength;
+	        	
+        		break;
+	        }
+	        	
+        }
+        nextMoveX = projectedMoveX;
+        nextMoveY = projectedMoveY;
+        //MOVIMIENTO CORREGIDO
+        
+        //que caiga si esta saltando y choca con techo
+        if (contactX && contactYtop && speedY < 0)
+            speedY = nextMoveY = 0;
+        
+        if (contactYbottom || contactYtop)
+        {
+            y += nextMoveY;
+            speedY = 0;
+
+            if (contactYbottom)
+                jumping = false;
+        }
+        if (speedY == 0)
+        	jumping = false;
+        if (contactX)
+        {
+            x += nextMoveX;
+            speedX = 0;
+        }
+    }
+    
+    private void controlCollision2(){
     	boolean contactX = false, contactYbottom = false, contactYtop = false;//tipo de colision
         float nextMoveX = speedX;
         float nextMoveY = speedY;
@@ -292,8 +374,7 @@ public class Player{
             speedX = 0;
         }
     }
-    
-    private void controlCollision2(){
+    private void controlCollision3(){
     	boolean contactX = false, contactYbottom = false, contactYtop = false;//tipo de colision
         float nextMoveX = speedX;
         float nextMoveY = speedY;
