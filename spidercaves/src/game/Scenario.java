@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.Scanner;
 import java.util.Vector;
 
+import org.lwjgl.util.glu.Project;
 import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Image;
@@ -23,6 +24,7 @@ public class Scenario {
 	public Vector<String[]> tilesMap;
 	public Vector<Image> tiles;
 	public HashMap<Integer, HashMap<Integer, TipoPixel>> collisionPoints;
+	public Vector<Proyectil> proyectiles;
 	
 	public Scenario(String _levelName) throws FileNotFoundException, SlickException{
 		levelName = _levelName;
@@ -30,6 +32,7 @@ public class Scenario {
 		tilesMap = getTilesMap();
 		tiles = getTiles();
 		collisionPoints = getCollisionPoints();
+		proyectiles = new Vector<Proyectil>();
 	}
 	
 	private Vector<String[]> getTilesMap() throws FileNotFoundException{
@@ -101,9 +104,9 @@ public class Scenario {
 	            //Y PAREDES DERECHA XQ EL PERSONAJE TENDRIA QUE QUEDAR DETRAS DE LA PARED Y SE DIBUJA DSPS...
 	            if ( tilesMap.elementAt(l)[c].matches("01"))
 	            {
-	                for (int x=0; x < 8; x++)
+	                for (int x=-6; x < TILESIZE-6; x++)
 	                {
-	                    for (int y=0; y < TILESIZE; y++)
+	                    for (int y=-3; y < TILESIZE-3; y++)
 	                    {
 	                        if (result.get(x+(c*TILESIZE)) == null)
 	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, TipoPixel>());
@@ -111,7 +114,7 @@ public class Scenario {
 	                    }
 	                }
 
-	            }
+	            }/*
 	            //tiles de piso 12 pixels debajo del top
 	            if ( tilesMap.elementAt(l)[c].matches("02"))
 	            {
@@ -205,7 +208,7 @@ public class Scenario {
 	                    	result.get( x+(c*TILESIZE) ).put( y+(l*TILESIZE), getTipoPx(x, y, tilesMap.elementAt(l)[c]) );
 	                    }
 	                }
-	            }
+	            }*/
 	        }
 	    }
 	    return result;
@@ -220,6 +223,31 @@ public class Scenario {
 	            //tile.draw((x-1)*TILESIZE, (y-1)*TILESIZE);
 	            screenG.drawImage(tile, (x-1)*TILESIZE, (y-1)*TILESIZE);
 	        }
+	    }
+	    
+	    //proyectiles
+	    if (proyectiles != null && proyectiles.size() > 0){
+		    for (int i=0; i < proyectiles.size(); i++){
+		    	if (proyectiles.get(i) == null) continue;
+		    	proyectiles.get(i).render(screenG);
+		    }
+	    }
+	}
+	
+	public void update(GameContainer container, int arg1){
+		//proyectiles
+	    if (proyectiles != null && proyectiles.size() > 0){
+	    	for (int i=0; i < proyectiles.size(); i++){
+	    		if (proyectiles.get(i) == null) continue;
+	    		if (proyectiles.get(i).x > 280 || proyectiles.get(i).x < 40 || proyectiles.get(i).y > 400 || proyectiles.get(i).y < 40){
+		    		proyectiles.setElementAt(null, i);
+				}
+	    	}
+	    	
+		    for (int i=0; i < proyectiles.size(); i++){
+		    	if (proyectiles.get(i) == null) continue;
+		    	proyectiles.get(i).update();
+		    }
 	    }
 	}
 	

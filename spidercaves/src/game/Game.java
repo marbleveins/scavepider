@@ -18,6 +18,8 @@ public class Game extends BasicGame{
     private int SCALE = 1;
     private boolean scaleChanged;
     private Image screen;
+    private int frames;
+    private long miliseconds;
     public static final String GAME_NAME = "Spcv";
     private Scenario scenario;
     private Player player;
@@ -58,7 +60,6 @@ public class Game extends BasicGame{
 	@Override
 	public void update(GameContainer container, int arg1) throws SlickException {
 		// TODO Auto-generated method stub
-		player.update(container, arg1);
 		if ( container.getInput().isKeyDown(Input.KEY_1) ) {
 			SCALE = 1;
 			scaleChanged = true;
@@ -67,6 +68,16 @@ public class Game extends BasicGame{
 			SCALE = 2;
 			scaleChanged = true;
         }
+		if ( container.getInput().isKeyDown(Input.KEY_SPACE) && miliseconds +40 < System.currentTimeMillis() ) {
+			if (frames == 60)
+				frames = 5;
+			else
+				frames = 60;
+			miliseconds = System.currentTimeMillis();
+			((AppGameContainer) container).setTargetFrameRate(frames);
+        }
+		player.update(container, arg1);
+		scenario.update(container, arg1);
 	}
     
 	public static void main(String[] args) throws SlickException {

@@ -32,6 +32,8 @@ public class Player{
     protected long lastTimeMoved;
     private Scenario scenario;
     private boolean standing = false;
+    private long lastShoot;
+    Image bulletImage;
  
     public Player(float x, float y, Scenario _scenario) throws SlickException{
     	this.x = x;
@@ -49,9 +51,10 @@ public class Player{
         initCollisionPoints();
         facing = Facing.RIGHT;
         state = State.FallingR;
+        
+        
+        //ANIMATION
         setSprite(takeBG(new Image("data/1.png")));
-        
-        
         Image [] runRight = {takeBG(new Image("data/1.png")), takeBG(new Image("data/2.png")), takeBG(new Image("data/3.png")), takeBG(new Image("data/4.png")),
         		takeBG(new Image("data/5.png")), takeBG(new Image("data/6.png")), takeBG(new Image("data/7.png")), takeBG(new Image("data/8.png"))};
         setRunningAnim(runRight, 100);
@@ -59,6 +62,15 @@ public class Player{
         Image [] jumpRight = {takeBG(new Image("data/j1.png")), takeBG(new Image("data/j2.png")), takeBG(new Image("data/j3.png")), takeBG(new Image("data/j4.png")),
         		takeBG(new Image("data/j5.png")), takeBG(new Image("data/j6.png")), takeBG(new Image("data/j7.png"))};
         setJumpingAnim(jumpRight, 100);
+        
+        
+        
+        //BULLET
+        bulletImage = new Image(1,1);
+		Graphics g = bulletImage.getGraphics();
+		g.setColor(Color.magenta);
+		g.fillRect(0,0,1,1);
+		g.flush();//IMPORTANT!!!
     }
     
 	protected void setSprite(Image i){
@@ -122,65 +134,16 @@ public class Player{
     }
     
     public void handleKeyboardInput(Input i, int delta){
-        boolean moveRequest = false;
-        if (speedY == 0) jumping = false;
-        // 1 == 1 || 
-        if (i.isKeyDown(Input.KEY_A) || i.isKeyDown(Input.KEY_LEFT))
-        {
-            speedX -= accelX;
-            if (speedY == 0) state = State.RunningL;
-            moveRequest = true;
-            facing = Facing.LEFT;
-            lastTimeMoved = System.currentTimeMillis();   
-        }
-        if (i.isKeyDown(Input.KEY_D) || i.isKeyDown(Input.KEY_RIGHT))
-        {
-            speedX += accelX;
-            if (speedY == 0) state = State.RunningR;
-            moveRequest = true;
-            facing = Facing.RIGHT;
-            lastTimeMoved = System.currentTimeMillis();   
-        }
-        if ( (i.isKeyDown(Input.KEY_W) || i.isKeyDown(Input.KEY_UP)) && !jumping && !jumpKeyDown )
-        {
-            speedY = -jumpStartSpeedY;
-            if (facing == Facing.RIGHT)
-            	state = State.JumpingR;
-            else
-            	state = State.JumpingL;
-            jumping = true;
-            jumpKeyDown = true;
-        }
-        if ( !i.isKeyDown(Input.KEY_W) && !i.isKeyDown(Input.KEY_UP))
-            jumpKeyDown = false;
-
-        if (speedX > maxSpeedX) speedX = maxSpeedX;
-        if (speedX < -maxSpeedX) speedX = -maxSpeedX;
-        if (speedY < -maxSpeedY) speedY = -maxSpeedY;
-
-        speedY += scenario.gravity;
-
-        if (!moveRequest)
-        {
-            if (speedX < 0) speedX += decelX;
-            if (speedX > 0) speedX -= decelX;
-            if (speedX > 0 && speedX < decelX) speedX = 0;
-            if (speedX < 0 && speedX > -decelX) speedX = 0;
-            if (!jumping){
-            	if (facing == Facing.RIGHT)
-            		state = State.StandingR;
-            	else
-            		state = State.StandingL;
-            }
-        }
+    	handleMovement(i);
+    	handleShoot(i);
     }
     
     private void initCollisionPoints(){
     	int points[][] = {
-    	        { 13,  3  }, { 17, 3  }, // Top of head
-    	        { 13,  31 }, { 17, 31 }, // Feet
-    	        { 6,  8 }, { 6,  25 }, // Left arm
-    	        { 25, 8 }, { 25, 25 }  // Right arm
+    	        { 12,  3  }, { 18, 3  }, // Top of head
+    	        { 12,  31 }, { 18, 31 }, // Feet
+    	        { 12,  10 }, { 12,  25 }, // Left arm
+    	        { 18, 10 }, { 18, 25 }  // Right arm
     	};
     	collisionPoint = points;
     }
@@ -209,7 +172,7 @@ public class Player{
 		controlCollision2();
 		y += speedY;
 	    x += speedX;
-	    if (x >= 320-PLAYERSIZE || x <= 0 || y >= 480-PLAYERSIZE || y <= 0) {x = 20;y = 5;}
+	    if ( atraviesaLimites(0,0) == true ) resetPos();
     }
     
     private void controlCollision1(){
@@ -314,37 +277,41 @@ public class Player{
 	        if ( colisionaAlgoConTerreno(projectedMoveX, projectedMoveY) )
 	        {
 	        	//probar con whiles en vez de ifs
-	        	if ( colisionaUnBrazoIzquierdo(projectedMoveX, projectedMoveY) ){
-	        		if ( modulo(nextMoveX / vectorLength) > nextMoveX )
+	        	while ( colisionaUnBrazoIzquierdo(projectedMoveX, projectedMoveY) ){
+	        		/*if ( modulo(nextMoveX / vectorLength) > nextMoveX )
 	        			projectedMoveX -= nextMoveX;
 	        		else
 	        			projectedMoveX += (nextMoveX / vectorLength != 0)?modulo(nextMoveX / vectorLength):1;
-	        			
+	        			*/
+		        	projectedMoveX += 1;
 	        		contactX = true;
 	        	}
-	        	if ( colisionaUnBrazoDerecho(projectedMoveX, projectedMoveY) ){
-	        		if ( modulo(nextMoveX / vectorLength) > nextMoveX )
+	        	while ( colisionaUnBrazoDerecho(projectedMoveX, projectedMoveY) ){
+	        		/*if ( modulo(nextMoveX / vectorLength) > nextMoveX )
 	        			projectedMoveX -= nextMoveX;
 	        		else
 	        			projectedMoveX -= (nextMoveX / vectorLength != 0)?modulo(nextMoveX / vectorLength):1;
-	        			
+	        			*/
+		        	projectedMoveX -= 1;
 	        		contactX = true;
 	        	}
-	        	if ( colisionaUnPie(projectedMoveX, projectedMoveY) ){
-	        		if ( modulo(nextMoveY / vectorLength) > nextMoveY )
+	        	while ( colisionaUnPie(projectedMoveX, projectedMoveY) ){
+	        		/*if ( modulo(nextMoveY / vectorLength) > nextMoveY )
 	        			projectedMoveY -= nextMoveY;
 	        		else
 	        			projectedMoveY -= (nextMoveY / vectorLength != 0)?modulo(nextMoveY / vectorLength):1;
-	        		
+	        		*/
+	        		projectedMoveY -= 1;
         			contactYbottom = true;
                     standing = true;
 	        	}
-	        	if ( colisionaUnaCabeza(projectedMoveX, projectedMoveY) ){
-	        		if ( modulo(nextMoveY / vectorLength) > nextMoveY )
+	        	while ( colisionaUnaCabeza(projectedMoveX, projectedMoveY) ){
+	        		/*if ( modulo(nextMoveY / vectorLength) > nextMoveY )
 	        			projectedMoveY -= nextMoveY;
 	        		else
 	        			projectedMoveY += (nextMoveY / vectorLength != 0)?modulo(nextMoveY / vectorLength):1;
-	        		
+	        		*/
+	        		projectedMoveY += 1;
 	        			contactYtop = true;
 	        	}
 	        }
@@ -497,5 +464,90 @@ public class Player{
 			return true;
 		return false;
 	}
+	private boolean atraviesaLimites(float xAdd, float yAdd){
+		for (int dir=0;dir<=3;dir++){
+			if ( (collisionPoint[dir*2][0] + x + xAdd) < 0 || (collisionPoint[dir*2][0] + x + xAdd) > 320
+			  || (collisionPoint[dir*2+1][0] + x + xAdd) < 0 || (collisionPoint[dir*2+1][0] + x + xAdd) > 320
+			  || (collisionPoint[dir*2][1] + y + yAdd) < 0 || (collisionPoint[dir*2][1] + y + yAdd) > 480 
+			  || (collisionPoint[dir*2+1][1] + y + yAdd) < 0 ||(collisionPoint[dir*2+1][1] + y + yAdd ) > 480)
+				return true;
+		}
+		return false;
+	}
+	private void resetPos(){
+		x = 25;
+		y = 25;
+	}
+	
+	private void handleMovement(Input i){
+		boolean moveRequest = false;
+        if (speedY == 0) jumping = false;
+        // 1 == 1 || 
+        if (i.isKeyDown(Input.KEY_A) || i.isKeyDown(Input.KEY_LEFT))
+        {
+            speedX -= accelX;
+            if (speedY == 0) state = State.RunningL;
+            moveRequest = true;
+            facing = Facing.LEFT;
+            lastTimeMoved = System.currentTimeMillis();   
+        }
+        if (i.isKeyDown(Input.KEY_D) || i.isKeyDown(Input.KEY_RIGHT))
+        {
+            speedX += accelX;
+            if (speedY == 0) state = State.RunningR;
+            moveRequest = true;
+            facing = Facing.RIGHT;
+            lastTimeMoved = System.currentTimeMillis();   
+        }
+        if ( (i.isKeyDown(Input.KEY_W) || i.isKeyDown(Input.KEY_UP)) && !jumping && !jumpKeyDown )
+        {
+            speedY = -jumpStartSpeedY;
+            if (facing == Facing.RIGHT)
+            	state = State.JumpingR;
+            else
+            	state = State.JumpingL;
+            jumping = true;
+            jumpKeyDown = true;
+        }
+        if ( !i.isKeyDown(Input.KEY_W) && !i.isKeyDown(Input.KEY_UP))
+            jumpKeyDown = false;
+
+        if (speedX > maxSpeedX) speedX = maxSpeedX;
+        if (speedX < -maxSpeedX) speedX = -maxSpeedX;
+        if (speedY < -maxSpeedY) speedY = -maxSpeedY;
+
+        speedY += scenario.gravity;
+
+        if (!moveRequest)
+        {
+            if (speedX < 0) speedX += decelX;
+            if (speedX > 0) speedX -= decelX;
+            if (speedX > 0 && speedX < decelX) speedX = 0;
+            if (speedX < 0 && speedX > -decelX) speedX = 0;
+            if (!jumping){
+            	if (facing == Facing.RIGHT)
+            		state = State.StandingR;
+            	else
+            		state = State.StandingL;
+            }
+        }
+	}
+
+	
+	private void handleShoot(Input i){
+		if (i.isMouseButtonDown(Input.MOUSE_LEFT_BUTTON) && System.currentTimeMillis() > lastShoot +500 )
+        {
+			try {
+				Proyectil p = new Proyectil((this.x + 16), (this.y + 12), i.getMouseX()/2, i.getMouseY()/2, bulletImage);
+				scenario.proyectiles.add(p);
+			} catch (SlickException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			lastShoot = System.currentTimeMillis();
+        }
+	}
+	
+	
 //EOF
 }
