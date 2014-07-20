@@ -15,15 +15,15 @@ import org.newdawn.slick.SlickException;
 public class Player{
 	public static final int PLAYERSIZE = 32;
 	float x, y;
-	float speedX, speedY;
-    float accelX, decelX;
-    float maxSpeedX, maxSpeedY;
+	float speedX, speedY, prevSpeedX, prevSpeedY;
+    float accelX = 0.2f, decelX = 0.5f;
+    float maxSpeedX = 3, maxSpeedY = 8;
     
-    float jumpStartSpeedY;
-    boolean jumping, jumpKeyDown;
+    float jumpStartSpeedY = 5;
+    boolean jumping, jumpKeyDown, falling;
     State state;//hay veces que no podes con 1 sola, ver
     protected Facing facing;
-    int collisionPoint[][];
+    int cpScenario[][];
 
     
     protected Image sprite;
@@ -38,15 +38,10 @@ public class Player{
     public Player(float x, float y, Scenario _scenario) throws SlickException{
     	this.x = x;
         this.y = y;
-        accelX = 0.4f;
-        decelX = accelX*4;
-        maxSpeedX = 2.5f;
-        maxSpeedY = 10;
-        jumpStartSpeedY = 4.5f;
         jumping = false;
         jumpKeyDown = false;
         standing = false;
-        
+        falling = true;
         scenario = _scenario;
         initCollisionPoints();
         facing = Facing.RIGHT;
@@ -59,16 +54,16 @@ public class Player{
         		takeBG(new Image("data/5.png")), takeBG(new Image("data/6.png")), takeBG(new Image("data/7.png")), takeBG(new Image("data/8.png"))};
         setRunningAnim(runRight, 100);
         
-        Image [] jumpRight = {takeBG(new Image("data/j1.png")), takeBG(new Image("data/j2.png")), takeBG(new Image("data/j3.png")), takeBG(new Image("data/j4.png")),
-        		takeBG(new Image("data/j5.png")), takeBG(new Image("data/j6.png")), takeBG(new Image("data/j7.png"))};
+        Image [] jumpRight = {takeBG(new Image("data/j1.png")), takeBG(new Image("data/j2.png")), takeBG(new Image("data/j3.png")), takeBG(new Image("data/j4.png"))};
         setJumpingAnim(jumpRight, 100);
         
-        
+        Image [] fallRight = {takeBG(new Image("data/f1.png")), takeBG(new Image("data/f2.png")), takeBG(new Image("data/f3.png")), takeBG(new Image("data/f4.png"))};
+        setFallingAnim(fallRight, 100);
         
         //BULLET
         bulletImage = new Image(1,1);
 		Graphics g = bulletImage.getGraphics();
-		g.setColor(Color.magenta);
+		g.setColor(Color.yellow);
 		g.fillRect(0,0,1,1);
 		g.flush();//IMPORTANT!!!
     }
@@ -80,17 +75,26 @@ public class Player{
 	}
 	
     public void render(Graphics screenG){
-    	if (jumping){
-    		//aJumping.get(facing).draw(x, y);
-    		screenG.drawAnimation(aJumping.get(facing), x, y);
-    	}
-    	else if(aRunning != null && lastTimeMoved+150 > System.currentTimeMillis()){
-            //aRunning.get(facing).draw(x,y);
-            screenG.drawAnimation(aRunning.get(facing), x, y);
-        }else{            
-            sprites.get(facing).draw(x, y);
+    	switch (state){
+    	case StandingL: case StandingR:
+    		sprites.get(facing).draw(x, y);
             screenG.drawImage(sprites.get(facing), x, y);
-        }
+    		break;
+    	case RunningL: case RunningR:
+    		/*if(aRunning != null && lastTimeMoved+150 > System.currentTimeMillis()){
+                screenG.drawAnimation(aRunning.get(facing), x, y);
+            }*/
+    		screenG.drawAnimation(aRunning.get(facing), x, y);
+    		break;
+    	case JumpingL: case JumpingR:
+    		screenG.drawAnimation(aJumping.get(facing), x, y);
+    		break;
+    	case FallingL: case FallingR:
+    		screenG.drawAnimation(aFalling.get(facing), x, y);
+    		break;
+    	default:
+    		break;
+    	}
     }
     
     protected void setRunningAnim(Image[] images, int frameDuration){
@@ -98,13 +102,13 @@ public class Player{
  
         //we can just put the right facing in with the default images
         aRunning.put(Facing.RIGHT, new Animation(images,frameDuration));
- 
+        
         Animation facingLeftAnimation = new Animation();
         for(Image i : images){
             facingLeftAnimation.addFrame(i.getFlippedCopy(true, false), frameDuration);
         }
         aRunning.put(Facing.LEFT, facingLeftAnimation);
- 
+        
     }
     protected void setStandingAnim(Image[] images, int frameDuration){
         aStanding = new HashMap<Facing,Animation>();
@@ -124,18 +128,30 @@ public class Player{
  
         //we can just put the right facing in with the default images
         aJumping.put(Facing.RIGHT, new Animation(images,frameDuration));
- 
+        aJumping.get(Facing.RIGHT).stopAt(aJumping.get(Facing.RIGHT).getFrameCount()-1);
         Animation facingLeftAnimation = new Animation();
         for(Image i : images){
             facingLeftAnimation.addFrame(i.getFlippedCopy(true, false), frameDuration);
         }
         aJumping.put(Facing.LEFT, facingLeftAnimation);
- 
+        aJumping.get(Facing.LEFT).stopAt(aJumping.get(Facing.LEFT).getFrameCount()-1);
+    }
+    protected void setFallingAnim(Image[] images, int frameDuration){
+        aFalling = new HashMap<Facing,Animation>();
+        //we can just put the right facing in with the default images
+        aFalling.put(Facing.RIGHT, new Animation(images,frameDuration));
+        aFalling.get(Facing.RIGHT).stopAt(aFalling.get(Facing.RIGHT).getFrameCount()-1);
+        Animation facingLeftAnimation = new Animation();
+        for(Image i : images){
+            facingLeftAnimation.addFrame(i.getFlippedCopy(true, false), frameDuration);
+        }
+        aFalling.put(Facing.LEFT, facingLeftAnimation);
+        aFalling.get(Facing.LEFT).stopAt(aFalling.get(Facing.LEFT).getFrameCount()-1);
     }
     
-    public void handleKeyboardInput(Input i, int delta){
+    public void handleKeyboardInput(Input i, int delta, int scale){
     	handleMovement(i);
-    	handleShoot(i);
+    	handleShoot(i, scale);
     }
     
     private void initCollisionPoints(){
@@ -145,7 +161,7 @@ public class Player{
     	        { 12,  10 }, { 12,  25 }, // Left arm
     	        { 18, 10 }, { 18, 25 }  // Right arm
     	};
-    	collisionPoint = points;
+    	cpScenario = points;
     }
     
     private Image takeBG(Image player) throws SlickException{
@@ -166,9 +182,10 @@ public class Player{
     	return result;
     }
     
-    public void update(GameContainer container, int arg1){
+    public void update(GameContainer container, int arg1, int scale){
     	Input input = container.getInput();
-		handleKeyboardInput(input, 2);
+    	prevSpeedX = speedX; prevSpeedY = speedY;
+		handleKeyboardInput(input, arg1, scale);
 		controlCollision2();
 		y += speedY;
 	    x += speedX;
@@ -267,9 +284,11 @@ public class Player{
       //CORRECCION DE MOVIMIENTO
         //puntos: DIR 0: cabeza 1 y cabeza 2, DIR 1: pie 1 y pie 2  , DIR 2 brazo I 1 y brazo I 2, DIR 3 brazo D 1 y brazo D 2
         float vectorLength = (float) Math.sqrt(nextMoveX * nextMoveX + nextMoveY * nextMoveY);
+        if (vectorLength == 0) vectorLength = 1;
         for (float segment=0; segment <= vectorLength; segment++){
         	projectedMoveX += nextMoveX / vectorLength;
         	projectedMoveY += nextMoveY / vectorLength;
+        	
         	if (modulo(projectedMoveX) > modulo(nextMoveX))
         		projectedMoveX = nextMoveX;
         	if (modulo(projectedMoveY) > modulo(nextMoveY))
@@ -283,7 +302,11 @@ public class Player{
 	        		else
 	        			projectedMoveX += (nextMoveX / vectorLength != 0)?modulo(nextMoveX / vectorLength):1;
 	        			*/
-		        	projectedMoveX += 1;
+	        		if (projectedMoveX != (int) projectedMoveX)
+	        			projectedMoveX = (int) projectedMoveX;
+	        		else
+	        			projectedMoveX += 1;
+	        		
 	        		contactX = true;
 	        	}
 	        	while ( colisionaUnBrazoDerecho(projectedMoveX, projectedMoveY) ){
@@ -292,7 +315,11 @@ public class Player{
 	        		else
 	        			projectedMoveX -= (nextMoveX / vectorLength != 0)?modulo(nextMoveX / vectorLength):1;
 	        			*/
-		        	projectedMoveX -= 1;
+	        		if (projectedMoveX != (int) projectedMoveX)
+	        			projectedMoveX = (int) projectedMoveX;
+	        		else
+	        			projectedMoveX -= 1;
+	        		
 	        		contactX = true;
 	        	}
 	        	while ( colisionaUnPie(projectedMoveX, projectedMoveY) ){
@@ -301,7 +328,11 @@ public class Player{
 	        		else
 	        			projectedMoveY -= (nextMoveY / vectorLength != 0)?modulo(nextMoveY / vectorLength):1;
 	        		*/
-	        		projectedMoveY -= 1;
+	        		if (projectedMoveY != (int) projectedMoveY)
+	        			projectedMoveY = (int) projectedMoveY;
+	        		else
+	        			projectedMoveY -= 1;
+	        		
         			contactYbottom = true;
                     standing = true;
 	        	}
@@ -311,9 +342,14 @@ public class Player{
 	        		else
 	        			projectedMoveY += (nextMoveY / vectorLength != 0)?modulo(nextMoveY / vectorLength):1;
 	        		*/
-	        		projectedMoveY += 1;
-	        			contactYtop = true;
+	        		if (projectedMoveY != (int) projectedMoveY)
+	        			projectedMoveY = (int) projectedMoveY;
+	        		else
+	        			projectedMoveY += 1;
+	        		
+	        		contactYtop = true;
 	        	}
+	        	
 	        }
 	        	
         }
@@ -359,8 +395,8 @@ public class Player{
             
             float vectorLength = (float) Math.sqrt(nextMoveX * nextMoveX + nextMoveY * nextMoveY);
             int segments = 0;
-            while ( (!scenario.collides(collisionPoint[dir*2][0] + x + projectedMoveX, collisionPoint[dir*2][1] + y + projectedMoveY) 
-            		|| !scenario.collides(collisionPoint[dir*2+1][0] + x + projectedMoveX, collisionPoint[dir*2+1][1] + y + projectedMoveY) ) 
+            while ( (!scenario.collides(cpScenario[dir*2][0] + x + projectedMoveX, cpScenario[dir*2][1] + y + projectedMoveY) 
+            		|| !scenario.collides(cpScenario[dir*2+1][0] + x + projectedMoveX, cpScenario[dir*2+1][1] + y + projectedMoveY) ) 
             		&& segments < vectorLength )
             {
             	projectedMoveX += nextMoveX / vectorLength;
@@ -421,10 +457,10 @@ public class Player{
     }
     
     private int ceil(float v){
-		return Integer.parseInt(String.valueOf( Math.ceil(v) ).substring(0, String.valueOf( Math.ceil(v) ).indexOf(".")));
+		return (int)  Math.ceil(v);
 	}
 	private int floor(float v){
-		return Integer.parseInt(String.valueOf( Math.floor(v) ).substring(0, String.valueOf( Math.floor(v) ).indexOf(".")));
+		return (int)  Math.floor(v);
 	}
 	private float modulo(float v){
 		if (v >= 0)
@@ -434,42 +470,43 @@ public class Player{
 	}
 	private boolean colisionaAlgoConTerreno(float xAdd, float yAdd){
 		for (int dir=0;dir<=3;dir++){
-			if (scenario.collides(collisionPoint[dir*2][0] + x + xAdd, collisionPoint[dir*2][1] + y + yAdd)
-				|| scenario.collides(collisionPoint[dir*2+1][0] + x + xAdd, collisionPoint[dir*2+1][1] + y + yAdd ) )
+			if (scenario.collides(cpScenario[dir*2][0] + x + xAdd, cpScenario[dir*2][1] + y + yAdd)
+				|| scenario.collides(cpScenario[dir*2+1][0] + x + xAdd, cpScenario[dir*2+1][1] + y + yAdd ) )
 				return true;
 		}
 		return false;
 	}
 	private boolean colisionaUnBrazoIzquierdo(float xAdd, float yAdd){
-		if (scenario.collides(collisionPoint[4][0] + x + xAdd, collisionPoint[4][1] + y + yAdd)
-			|| scenario.collides(collisionPoint[5][0] + x + xAdd, collisionPoint[5][1] + y + yAdd ) )
+		if (scenario.collides(cpScenario[4][0] + x + xAdd, cpScenario[4][1] + y + yAdd)
+			|| scenario.collides(cpScenario[5][0] + x + xAdd, cpScenario[5][1] + y + yAdd ) )
 			return true;
 		return false;
 	}
 	private boolean colisionaUnBrazoDerecho(float xAdd, float yAdd){
-		if (scenario.collides(collisionPoint[6][0] + x + xAdd, collisionPoint[6][1] + y + yAdd)
-			|| scenario.collides(collisionPoint[7][0] + x + xAdd, collisionPoint[7][1] + y + yAdd ) )
+		if (scenario.collides(cpScenario[6][0] + x + xAdd, cpScenario[6][1] + y + yAdd)
+			|| scenario.collides(cpScenario[7][0] + x + xAdd, cpScenario[7][1] + y + yAdd ) )
 			return true;
 		return false;
 	}
 	private boolean colisionaUnPie(float xAdd, float yAdd){
-		if (scenario.collides(collisionPoint[2][0] + x + xAdd, collisionPoint[2][1] + y + yAdd)
-			|| scenario.collides(collisionPoint[3][0] + x + xAdd, collisionPoint[3][1] + y + yAdd ) )
+		if (scenario.collides(cpScenario[2][0] + x + xAdd, cpScenario[2][1] + y + yAdd)
+			|| scenario.collides(cpScenario[3][0] + x + xAdd, cpScenario[3][1] + y + yAdd ) )
 			return true;
 		return false;
 	}
 	private boolean colisionaUnaCabeza(float xAdd, float yAdd){
-		if (scenario.collides(collisionPoint[0][0] + x + xAdd, collisionPoint[0][1] + y + yAdd)
-			|| scenario.collides(collisionPoint[1][0] + x + xAdd, collisionPoint[1][1] + y + yAdd ) )
+		if (scenario.collides(cpScenario[0][0] + x + xAdd, cpScenario[0][1] + y + yAdd)
+			|| scenario.collides(cpScenario[1][0] + x + xAdd, cpScenario[1][1] + y + yAdd ) )
 			return true;
 		return false;
 	}
+	
 	private boolean atraviesaLimites(float xAdd, float yAdd){
 		for (int dir=0;dir<=3;dir++){
-			if ( (collisionPoint[dir*2][0] + x + xAdd) < 0 || (collisionPoint[dir*2][0] + x + xAdd) > 320
-			  || (collisionPoint[dir*2+1][0] + x + xAdd) < 0 || (collisionPoint[dir*2+1][0] + x + xAdd) > 320
-			  || (collisionPoint[dir*2][1] + y + yAdd) < 0 || (collisionPoint[dir*2][1] + y + yAdd) > 480 
-			  || (collisionPoint[dir*2+1][1] + y + yAdd) < 0 ||(collisionPoint[dir*2+1][1] + y + yAdd ) > 480)
+			if ( (cpScenario[dir*2][0] + x + xAdd) < 0 || (cpScenario[dir*2][0] + x + xAdd) > 320
+			  || (cpScenario[dir*2+1][0] + x + xAdd) < 0 || (cpScenario[dir*2+1][0] + x + xAdd) > 320
+			  || (cpScenario[dir*2][1] + y + yAdd) < 0 || (cpScenario[dir*2][1] + y + yAdd) > 480 
+			  || (cpScenario[dir*2+1][1] + y + yAdd) < 0 ||(cpScenario[dir*2+1][1] + y + yAdd ) > 480)
 				return true;
 		}
 		return false;
@@ -481,12 +518,22 @@ public class Player{
 	
 	private void handleMovement(Input i){
 		boolean moveRequest = false;
-        if (speedY == 0) jumping = false;
+		boolean feetsOnFloor = false;
+		if ( colisionaUnPie(0, 1) == true)
+			feetsOnFloor = true;
+		if (speedY == 0){
+			aFalling.get(Facing.LEFT).restart();
+			aFalling.get(Facing.RIGHT).restart();
+		}
+        if (speedY < 0){
+        	jumping = false;
+        	falling = true;
+        }
         // 1 == 1 || 
         if (i.isKeyDown(Input.KEY_A) || i.isKeyDown(Input.KEY_LEFT))
         {
             speedX -= accelX;
-            if (speedY == 0) state = State.RunningL;
+            if (feetsOnFloor && speedX < -1) state = State.RunningL;
             moveRequest = true;
             facing = Facing.LEFT;
             lastTimeMoved = System.currentTimeMillis();   
@@ -494,20 +541,19 @@ public class Player{
         if (i.isKeyDown(Input.KEY_D) || i.isKeyDown(Input.KEY_RIGHT))
         {
             speedX += accelX;
-            if (speedY == 0) state = State.RunningR;
+            if (feetsOnFloor && speedX > 1) state = State.RunningR;
             moveRequest = true;
             facing = Facing.RIGHT;
             lastTimeMoved = System.currentTimeMillis();   
         }
-        if ( (i.isKeyDown(Input.KEY_W) || i.isKeyDown(Input.KEY_UP)) && !jumping && !jumpKeyDown )
+        if ( (i.isKeyDown(Input.KEY_W) || i.isKeyDown(Input.KEY_UP)) && feetsOnFloor && !jumpKeyDown )
         {
             speedY = -jumpStartSpeedY;
-            if (facing == Facing.RIGHT)
-            	state = State.JumpingR;
-            else
-            	state = State.JumpingL;
+            state = (facing == Facing.RIGHT)?State.JumpingR:state.JumpingL;
             jumping = true;
             jumpKeyDown = true;
+            aJumping.get(Facing.RIGHT).restart();
+            aJumping.get(Facing.LEFT).restart();
         }
         if ( !i.isKeyDown(Input.KEY_W) && !i.isKeyDown(Input.KEY_UP))
             jumpKeyDown = false;
@@ -517,14 +563,17 @@ public class Player{
         if (speedY < -maxSpeedY) speedY = -maxSpeedY;
 
         speedY += scenario.gravity;
-
+        if (speedY > scenario.gravity){
+        	falling = true;
+        	state = (facing == Facing.RIGHT)?state.FallingR:state.FallingL;
+        }
         if (!moveRequest)
         {
             if (speedX < 0) speedX += decelX;
             if (speedX > 0) speedX -= decelX;
             if (speedX > 0 && speedX < decelX) speedX = 0;
             if (speedX < 0 && speedX > -decelX) speedX = 0;
-            if (!jumping){
+            if (feetsOnFloor && ! jumping){
             	if (facing == Facing.RIGHT)
             		state = State.StandingR;
             	else
@@ -534,11 +583,11 @@ public class Player{
 	}
 
 	
-	private void handleShoot(Input i){
-		if (i.isMouseButtonDown(Input.MOUSE_LEFT_BUTTON) && System.currentTimeMillis() > lastShoot +500 )
+	private void handleShoot(Input i, int scale){
+		if (i.isMouseButtonDown(Input.MOUSE_LEFT_BUTTON) && System.currentTimeMillis() > lastShoot +250 )
         {
 			try {
-				Proyectil p = new Proyectil((this.x + 16), (this.y + 12), i.getMouseX()/2, i.getMouseY()/2, bulletImage);
+				Proyectil p = new Proyectil((this.x + 16), (this.y + 12), i.getMouseX()/scale, i.getMouseY()/scale, 3, bulletImage);
 				scenario.proyectiles.add(p);
 			} catch (SlickException e) {
 				// TODO Auto-generated catch block

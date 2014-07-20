@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.Scanner;
 import java.util.Vector;
 
-import org.lwjgl.util.glu.Project;
 import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Image;
@@ -28,7 +27,7 @@ public class Scenario {
 	
 	public Scenario(String _levelName) throws FileNotFoundException, SlickException{
 		levelName = _levelName;
-		gravity = .3f;
+		gravity = .1f;
 		tilesMap = getTilesMap();
 		tiles = getTiles();
 		collisionPoints = getCollisionPoints();
@@ -215,6 +214,7 @@ public class Scenario {
 	}
 
 	public void render(GameContainer container, Graphics g, Graphics screenG){
+		//mapa
 	    for (int y=1 ; y<=tilesMap.size() ; y++)
 	    {
 	        for (int x=1 ; x<=tilesMap.elementAt(y-1).length ; x++)
@@ -237,35 +237,35 @@ public class Scenario {
 	public void update(GameContainer container, int arg1){
 		//proyectiles
 	    if (proyectiles != null && proyectiles.size() > 0){
-	    	for (int i=0; i < proyectiles.size(); i++){
-	    		if (proyectiles.get(i) == null) continue;
-	    		if (proyectiles.get(i).x > 280 || proyectiles.get(i).x < 40 || proyectiles.get(i).y > 400 || proyectiles.get(i).y < 40){
-		    		proyectiles.setElementAt(null, i);
-				}
-	    	}
-	    	
+	    	controlCollisionProyectiles();
 		    for (int i=0; i < proyectiles.size(); i++){
 		    	if (proyectiles.get(i) == null) continue;
 		    	proyectiles.get(i).update();
 		    }
 	    }
+	    
 	}
 	
 	public boolean collides(float x, float y)
 	{
 		//floor porque es por pixels y el pixel 5 es del 5.0 hasta el 5.9
-	    if (collisionPoints.containsKey(floor(x)) == true && collisionPoints.get(floor(x)).get(floor(y)) != null)
-	        return true;//esto deberia ser re poco costoso por ser un hashmap, no?
+	    if (collisionPoints.containsKey((int)x) == true && collisionPoints.get((int)x).get((int)y) != null)
+	        return true;
 	    return false;
 	}
 	
 	private int ceil(float v){
-		return Integer.parseInt(String.valueOf( Math.ceil(v) ).substring(0, String.valueOf( Math.ceil(v) ).indexOf(".")));
+		return (int)  Math.ceil(v);
 	}
 	private int floor(float v){
-		return Integer.parseInt(String.valueOf( Math.floor(v) ).substring(0, String.valueOf( Math.floor(v) ).indexOf(".")));
+		return (int)  Math.floor(v);
 	}
-	
+	private float modulo(float v){
+		if (v >= 0)
+			return v;
+		else
+			return -1*v;
+	}
 	private TipoPixel getTipoPx(int x, int y, String tile ){
 		switch (tile){
 		case "01":
@@ -320,5 +320,40 @@ public class Scenario {
 		//si no es de los bordes
 		return TipoPixel.CENTRO;
 	}
-//EOF
+
+	private void controlCollisionProyectiles(){
+		
+		for (int i=0; i < proyectiles.size(); i++){
+			if ( proyectiles.isEmpty() ) break;
+    		if (proyectiles.get(i) == null) continue;//si se van de la pantalla los borra
+    		if (proyectiles.get(i).x > 320 || proyectiles.get(i).x < 0 || proyectiles.get(i).y > 480 || proyectiles.get(i).y < 0){
+    			proyectiles.removeElementAt(i);
+    			break;
+			}
+    		
+    		float nextMoveX = proyectiles.get(i).speedX;
+	        float nextMoveY = proyectiles.get(i).speedY;
+    		float projectedMoveX = 0, projectedMoveY = 0;
+	        //CORRECCION DE MOVIMIENTO
+	        float vectorLength = (float) Math.sqrt(nextMoveX * nextMoveX + nextMoveY * nextMoveY);
+	        if (vectorLength == 0) vectorLength = 1;
+	        for (float segment=0; segment <= vectorLength; segment++){
+	        	projectedMoveX += nextMoveX / vectorLength;
+	        	projectedMoveY += nextMoveY / vectorLength;
+	        	
+	        	if (modulo(projectedMoveX) > modulo(nextMoveX))
+	        		projectedMoveX = nextMoveX;
+	        	if (modulo(projectedMoveY) > modulo(nextMoveY))
+	        		projectedMoveY = nextMoveY;
+		        if ( collides(proyectiles.get(i).x + projectedMoveX, proyectiles.get(i).y + projectedMoveY) )
+		        {
+		        	proyectiles.removeElementAt(i);
+		        	break;
+		        }
+	        }
+	        if ( proyectiles.isEmpty() ) break;
+		}
+	}
+	
+	//EOF
 }

@@ -16,7 +16,7 @@ public class Game extends BasicGame{
 	public static final int WINDOW_WIDTH  = 320;
     public static final int WINDOW_HEIGTH = 480;
     private int SCALE = 1;
-    private boolean scaleChanged;
+    private boolean scaleChanged = false;
     private Image screen;
     private int frames;
     private long miliseconds;
@@ -42,13 +42,14 @@ public class Game extends BasicGame{
 		player.render(screenG);
 		screenG.flush();
 		screen.draw(0,0, SCALE);
+		g.drawString("state: " + player.state,50,50);
+		g.drawString("speedX: " + player.speedX,50,62);
+		g.drawString("speedY: " + player.speedY,50,74);
 	}
 	@Override
 	public void init(GameContainer container) throws SlickException {
 		// TODO Auto-generated method stub
 		screen = new Image(WINDOW_WIDTH, WINDOW_HEIGTH);
-		scaleChanged = false;
-		
 		try {
 			scenario = new Scenario("map1");
 		} catch (FileNotFoundException e) {
@@ -76,7 +77,7 @@ public class Game extends BasicGame{
 			miliseconds = System.currentTimeMillis();
 			((AppGameContainer) container).setTargetFrameRate(frames);
         }
-		player.update(container, arg1);
+		player.update(container, arg1, SCALE);
 		scenario.update(container, arg1);
 	}
     
