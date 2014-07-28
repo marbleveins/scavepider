@@ -25,11 +25,21 @@ public class Scenario {
 	public HashMap<Integer, HashMap<Integer, TipoPixel>> collisionPoints;
 	public Vector<Proyectil> proyectiles;
 	
-	public Scenario(String _levelName) throws FileNotFoundException, SlickException{
+	public Scenario(String _levelName){
 		levelName = _levelName;
-		gravity = .1f;
-		tilesMap = getTilesMap();
-		tiles = getTiles();
+		gravity = .8f;
+		try {
+			tilesMap = getTilesMap();
+		} catch (FileNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		try {
+			tiles = getTiles();
+		} catch (SlickException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		collisionPoints = getCollisionPoints();
 		proyectiles = new Vector<Proyectil>();
 	}
@@ -234,10 +244,12 @@ public class Scenario {
 	    }
 	}
 	
-	public void update(GameContainer container, int arg1){
+	public void update(GameContainer container, int delta){
 		//proyectiles
 	    if (proyectiles != null && proyectiles.size() > 0){
+	    	
 	    	controlCollisionProyectiles();
+	    	
 		    for (int i=0; i < proyectiles.size(); i++){
 		    	if (proyectiles.get(i) == null) continue;
 		    	proyectiles.get(i).update();
@@ -248,7 +260,7 @@ public class Scenario {
 	
 	public boolean collides(float x, float y)
 	{
-		//floor porque es por pixels y el pixel 5 es del 5.0 hasta el 5.9
+		//int porque es por pixels y el pixel 5 es del 5.0 hasta el 5.9
 	    if (collisionPoints.containsKey((int)x) == true && collisionPoints.get((int)x).get((int)y) != null)
 	        return true;
 	    return false;
