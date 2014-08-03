@@ -37,7 +37,7 @@ public class Controller {
 		for (int s=0; s<segmentos; s++){
 			
 			//consigue la colision de cada los objeputs en este segmento del movimiento entero
-			Data data = detector.detectContact(scenario, player.body, delta);
+			CollisionInfo data = detector.detectContact(scenario, player.body, delta);
 			
 			//resuelve si tienen colision y encamina
 			solver.solve(player.body, data);

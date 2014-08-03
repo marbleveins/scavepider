@@ -28,20 +28,55 @@ public class Scenario {
 	public Scenario(String _levelName){
 		levelName = _levelName;
 		gravity = .8f;
+		
 		try {
 			tilesMap = getTilesMap();
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		try {
 			tiles = getTiles();
 		} catch (SlickException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
 		collisionPoints = getCollisionPoints();
 		proyectiles = new Vector<Proyectil>();
+	}
+	
+	public void render(GameContainer container, Graphics g, Graphics screenG){
+		//mapa
+	    for (int y=1 ; y<=tilesMap.size() ; y++)
+	    {
+	        for (int x=1 ; x<=tilesMap.elementAt(y-1).length ; x++)
+	        {
+	        	Image tile = tiles.elementAt(Integer.parseInt( (tilesMap.elementAt(y-1)[x-1]) ));
+	            //tile.draw((x-1)*TILESIZE, (y-1)*TILESIZE);
+	            screenG.drawImage(tile, (x-1)*TILESIZE, (y-1)*TILESIZE);
+	        }
+	    }
+	    
+	    //proyectiles
+	    if (proyectiles != null && proyectiles.size() > 0){
+		    for (int i=0; i < proyectiles.size(); i++){
+		    	if (proyectiles.get(i) == null) continue;
+		    	proyectiles.get(i).render(screenG);
+		    }
+	    }
+	}
+	
+	public void update(GameContainer container, int delta){
+		//proyectiles
+	    if (proyectiles != null && proyectiles.size() > 0){
+	    	
+	    	controlCollisionProyectiles();
+	    	
+		    for (int i=0; i < proyectiles.size(); i++){
+		    	if (proyectiles.get(i) == null) continue;
+		    	proyectiles.get(i).update();
+		    }
+	    }
+	    
 	}
 	
 	private Vector<String[]> getTilesMap() throws FileNotFoundException{
@@ -223,41 +258,6 @@ public class Scenario {
 	    return result;
 	}
 
-	public void render(GameContainer container, Graphics g, Graphics screenG){
-		//mapa
-	    for (int y=1 ; y<=tilesMap.size() ; y++)
-	    {
-	        for (int x=1 ; x<=tilesMap.elementAt(y-1).length ; x++)
-	        {
-	        	Image tile = tiles.elementAt(Integer.parseInt( (tilesMap.elementAt(y-1)[x-1]) ));
-	            //tile.draw((x-1)*TILESIZE, (y-1)*TILESIZE);
-	            screenG.drawImage(tile, (x-1)*TILESIZE, (y-1)*TILESIZE);
-	        }
-	    }
-	    
-	    //proyectiles
-	    if (proyectiles != null && proyectiles.size() > 0){
-		    for (int i=0; i < proyectiles.size(); i++){
-		    	if (proyectiles.get(i) == null) continue;
-		    	proyectiles.get(i).render(screenG);
-		    }
-	    }
-	}
-	
-	public void update(GameContainer container, int delta){
-		//proyectiles
-	    if (proyectiles != null && proyectiles.size() > 0){
-	    	
-	    	controlCollisionProyectiles();
-	    	
-		    for (int i=0; i < proyectiles.size(); i++){
-		    	if (proyectiles.get(i) == null) continue;
-		    	proyectiles.get(i).update();
-		    }
-	    }
-	    
-	}
-	
 	public boolean collides(float x, float y)
 	{
 		//int porque es por pixels y el pixel 5 es del 5.0 hasta el 5.9
@@ -278,6 +278,8 @@ public class Scenario {
 		else
 			return -1*v;
 	}
+	
+	
 	private TipoPixel getTipoPx(int x, int y, String tile ){
 		switch (tile){
 		case "01":

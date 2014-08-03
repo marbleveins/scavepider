@@ -46,14 +46,21 @@ public class Game extends BasicGame{
 		player.render(screenG);
 		screenG.flush();
 		screen.draw(0,0, SCALE);
+		
+		//debug inScreenInfo
 		g.drawString("state: " + player.state,50,50);
 		g.drawString("speedX: " + player.body.speedX,50,62);
 		g.drawString("speedY: " + player.body.speedY,50,74);
+		
+		g.drawString("(" + (container.getInput().getMouseX()/SCALE) + ", " + (container.getInput().getMouseY()/SCALE) + ")",1*SCALE,466*SCALE);
 	}
 	
 	@Override
 	public void update(GameContainer container, int delta) throws SlickException {
+		//no dar bola
 		keyBoardSettings(container);
+		//no dar bola
+		
 		controller.update(container, delta, SCALE, scenario, player);
 	}
     

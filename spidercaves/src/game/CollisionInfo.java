@@ -1,6 +1,6 @@
 package game;
 
-public class Data {
+public class CollisionInfo {
 	public float moveX, moveY;
 	public boolean atraviesaLimitesPantalla, jumping, contactX, contactYtop, contactYbottom;
 

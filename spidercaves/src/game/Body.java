@@ -4,7 +4,7 @@ public class Body {
 	public float x, y, speedX, speedY;
     float accelX, decelX, maxSpeedX, maxSpeedY, jumpStartSpeedY;
     int collisionRectangle[][];
-    public boolean jumping, standing;
+    public boolean jumping, standing, falling;
     
     public Body(){
     	x = 0; y = 0; speedX = 0; speedY = 0;

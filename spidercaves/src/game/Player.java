@@ -13,10 +13,11 @@ import org.newdawn.slick.Input;
 import org.newdawn.slick.SlickException;
 
 public class Player{
-	public static final int PLAYERSIZE = 32;
+	public static final int SPRITE_SIZE = 32;
+	private static final String SPRITES_FOLDER = "data/player/";
 	public Body body;
 	
-    boolean jumping, jumpKeyDown, falling;
+    boolean jumpKeyDown;
     State state;//hay veces que no podes con 1 sola, ver
     private Facing facing;
     
@@ -39,9 +40,7 @@ public class Player{
         body.maxSpeedY = 25;
         body.jumpStartSpeedY = 10;
         
-        jumping = false;
         jumpKeyDown = false;
-        falling = true;
         scenario = _scenario;
         facing = Facing.RIGHT;
         state = State.FallingR;
@@ -83,47 +82,45 @@ public class Player{
     }
     
 	private void handleMovement(Input i, int delta){
-		boolean moveRequest = false;
-		/*boolean feetsOnFloor = false;
-		if ( colisionaUnPie(0, 1) == true)
-			feetsOnFloor = true;
-		//REEMPLAZADO POR p.standing
-		 * */
+		boolean moveXrequest = false;
+		
 		if (body.speedY == 0){
 			aFalling.get(Facing.LEFT).restart();
 			aFalling.get(Facing.RIGHT).restart();
 		}
         if (body.speedY < 0){
-        	jumping = false;
-        	falling = true;
+        	body.jumping = false;
+        	body.standing = false;
+        	body.falling = true;
         }
-        // 1 == 1 || 
-        if ( i.isKeyDown(Input.KEY_A) || i.isKeyDown(Input.KEY_LEFT) && (!i.isKeyDown(Input.KEY_D) && !i.isKeyDown(Input.KEY_RIGHT)))
+        //   1 == 1 || 
+        if ( (i.isKeyDown(Input.KEY_A) || i.isKeyDown(Input.KEY_LEFT)) && (!i.isKeyDown(Input.KEY_D) && !i.isKeyDown(Input.KEY_RIGHT)))
         {
         	body.speedX -= body.accelX;
         	if (body.speedX > 0) body.speedX -= body.decelX;
-            if (body.standing && body.speedX < -1) state = State.RunningL;
-            moveRequest = true;
+			if (body.standing && body.speedX < -1) state = State.RunningL;
+            moveXrequest = true;
             facing = Facing.LEFT;
         }
-        if ( i.isKeyDown(Input.KEY_D) || i.isKeyDown(Input.KEY_RIGHT) && (!i.isKeyDown(Input.KEY_A) && !i.isKeyDown(Input.KEY_LEFT)))
+        if ( (i.isKeyDown(Input.KEY_D) || i.isKeyDown(Input.KEY_RIGHT)) && (!i.isKeyDown(Input.KEY_A) && !i.isKeyDown(Input.KEY_LEFT)))
         {
         	body.speedX += body.accelX;
         	if (body.speedX < 0) body.speedX += body.decelX;
             if (body.standing && body.speedX > 1) state = State.RunningR;
-            moveRequest = true;
+            moveXrequest = true;
             facing = Facing.RIGHT;
         }
         if ( (i.isKeyDown(Input.KEY_W) || i.isKeyDown(Input.KEY_UP)) && body.standing && !jumpKeyDown )
         {
         	body.speedY = -body.jumpStartSpeedY;
             state = (facing == Facing.RIGHT)?State.JumpingR:State.JumpingL;
-            jumping = true;
+            body.standing = false;
+            body.jumping = true;
             jumpKeyDown = true;
             aJumping.get(Facing.RIGHT).restart();
             aJumping.get(Facing.LEFT).restart();
         }
-        if ( !i.isKeyDown(Input.KEY_W) && !i.isKeyDown(Input.KEY_UP))
+        if ( body.standing && !i.isKeyDown(Input.KEY_W) && !i.isKeyDown(Input.KEY_UP))
             jumpKeyDown = false;
 
         if (body.speedX > body.maxSpeedX) body.speedX = body.maxSpeedX;
@@ -132,16 +129,16 @@ public class Player{
 
         body.speedY += scenario.gravity;
         if (body.speedY > scenario.gravity){
-        	falling = true;
+        	body.falling = true;
         	state = (facing == Facing.RIGHT)?State.FallingR:State.FallingL;
         }
-        if (!moveRequest)
+        if (!moveXrequest)
         {
             if (body.speedX < 0) body.speedX += body.decelX;
             if (body.speedX > 0) body.speedX -= body.decelX;
             if (body.speedX > 0 && body.speedX < body.decelX) body.speedX = 0;
             if (body.speedX < 0 && body.speedX > -body.decelX) body.speedX = 0;
-            if (body.standing && ! jumping){
+            if (body.standing && ! body.jumping){
             	if (facing == Facing.RIGHT)
             		state = State.StandingR;
             	else
@@ -158,7 +155,6 @@ public class Player{
 				Proyectil p = new Proyectil((body.x + 16), (body.y + 12), i.getMouseX()/scale, i.getMouseY()/scale, 3, bulletImage);
 				scenario.proyectiles.add(p);
 			} catch (SlickException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			lastShoot = System.currentTimeMillis();
@@ -172,16 +168,16 @@ public class Player{
      ************************/
 	
     private void getPlayerSprites() throws SlickException{
-    	setPlayerStandingSprite(takeBG(new Image("data/1.png")));
+    	setPlayerStandingSprite(takeBG(new Image(SPRITES_FOLDER + "1.png")));
         
-        Image [] runRight = {takeBG(new Image("data/1.png")), takeBG(new Image("data/2.png")), takeBG(new Image("data/3.png")), takeBG(new Image("data/4.png")),
-        		takeBG(new Image("data/5.png")), takeBG(new Image("data/6.png")), takeBG(new Image("data/7.png")), takeBG(new Image("data/8.png"))};
+        Image [] runRight = {takeBG(new Image(SPRITES_FOLDER + "1.png")), takeBG(new Image(SPRITES_FOLDER + "2.png")), takeBG(new Image(SPRITES_FOLDER + "3.png")), takeBG(new Image(SPRITES_FOLDER + "4.png")),
+        		takeBG(new Image(SPRITES_FOLDER + "5.png")), takeBG(new Image(SPRITES_FOLDER + "6.png")), takeBG(new Image(SPRITES_FOLDER + "7.png")), takeBG(new Image(SPRITES_FOLDER + "8.png"))};
         aRunning = makeAnimation(runRight, 100);
         
-        Image [] jumpRight = {takeBG(new Image("data/j1.png")), takeBG(new Image("data/j2.png")), takeBG(new Image("data/j3.png")), takeBG(new Image("data/j4.png"))};
+        Image [] jumpRight = {takeBG(new Image(SPRITES_FOLDER + "j1.png")), takeBG(new Image(SPRITES_FOLDER + "j2.png")), takeBG(new Image(SPRITES_FOLDER + "j3.png")), takeBG(new Image(SPRITES_FOLDER + "j4.png"))};
         aJumping = makeAnimation(jumpRight, 100);
         
-        Image [] fallRight = {takeBG(new Image("data/f1.png")), takeBG(new Image("data/f2.png")), takeBG(new Image("data/f3.png")), takeBG(new Image("data/f4.png"))};
+        Image [] fallRight = {takeBG(new Image(SPRITES_FOLDER + "f1.png")), takeBG(new Image(SPRITES_FOLDER + "f2.png")), takeBG(new Image(SPRITES_FOLDER + "f3.png")), takeBG(new Image(SPRITES_FOLDER + "f4.png"))};
         aFalling = makeAnimation(fallRight,	100);
         
     }
@@ -219,13 +215,13 @@ public class Player{
 	private Image takeBG(Image img) throws SlickException{
 		//NO SE PUEDE CAMBIAR UN COLOR QUE YA ESTA A TRANSPARENTE
 		//SOLO ME QUEDA HACER UNA NUEVA Y DIBUJAR SIN EL FONDO
-    	Image result = new Image(PLAYERSIZE,PLAYERSIZE);
+    	Image result = new Image(SPRITE_SIZE,SPRITE_SIZE);
 		Graphics g = result.getGraphics();
 		g.setColor(Color.transparent);
-		g.fillRect(0,0,PLAYERSIZE,PLAYERSIZE);
+		g.fillRect(0,0,SPRITE_SIZE,SPRITE_SIZE);
 		Color backGround = img.getColor(0, 0);
-		for (int y=0 ; y<PLAYERSIZE ; y++){
-         	for (int x=0 ; x<PLAYERSIZE ; x++){
+		for (int y=0 ; y<SPRITE_SIZE ; y++){
+         	for (int x=0 ; x<SPRITE_SIZE ; x++){
          		if ( img.getColor(x, y).r != backGround.r || img.getColor(x, y).g != backGround.g || img.getColor(x, y).b != backGround.b ){
          			g.setColor( img.getColor(x, y) );
          			g.fillRect(x, y, 1, 1);

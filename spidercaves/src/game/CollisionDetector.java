@@ -11,8 +11,8 @@ public class CollisionDetector {
 	    return false;
 	}
 	
-	public Data scenarioAndBody(Scenario scenario, Body b, int delta){
-		Data data = new Data();
+	public CollisionInfo scenarioAndBody(Scenario scenario, Body b, int delta){
+		CollisionInfo data = new CollisionInfo();
 		if (atraviesaLimitesPantalla(b) == true){
 			//ESTO ES PARA DEBUG
 			data.atraviesaLimitesPantalla = true;
@@ -71,12 +71,12 @@ public class CollisionDetector {
         return data;
     }
 	
-	public Data detectContact(Scenario scenario, Body b, int delta){
-		Data data = new Data();
+	public CollisionInfo detectContact(Scenario scenario, Body b, int delta){
+		CollisionInfo info = new CollisionInfo();
 		if (atraviesaLimitesPantalla(b) == true){
 			//ESTO ES PARA DEBUG
-			data.atraviesaLimitesPantalla = true;
-			return data;
+			info.atraviesaLimitesPantalla = true;
+			return info;
 		}
 		
         if ( colisionaAlgoConTerreno(scenario, b, b.speedX, b.speedY) )
@@ -86,35 +86,35 @@ public class CollisionDetector {
         			b.speedX = (int) b.speedX;
         		else
         			b.speedX += 1;
-        		data.contactX = true;
+        		info.contactX = true;
         	}
         	while ( colisionaDerecha(scenario, b, b.speedX, b.speedY) ){
         		if (b.speedX != (int) b.speedX)
         			b.speedX = (int) b.speedX;
         		else
         			b.speedX -= 1;
-        		data.contactX = true;
+        		info.contactX = true;
         	}
         	while ( colisionaBottom(scenario, b, b.speedX, b.speedY) ){
         		if (b.speedY != (int) b.speedY)
         			b.speedY = (int) b.speedY;
         		else
         			b.speedY -= 1;
-        		data.contactYbottom = true;
+        		info.contactYbottom = true;
         	}
         	while ( colisionaTop(scenario, b, b.speedX, b.speedY) ){
         		if (b.speedY != (int) b.speedY)
         			b.speedY = (int) b.speedY;
         		else
         			b.speedY += 1;
-        		data.contactYtop = true;
+        		info.contactYtop = true;
         	}
         }
         
-        data.moveX = b.speedX;
-    	data.moveY = b.speedY;
+        info.moveX = b.speedX;
+    	info.moveY = b.speedY;
     	
-        return data;
+        return info;
     }
 	
 	
