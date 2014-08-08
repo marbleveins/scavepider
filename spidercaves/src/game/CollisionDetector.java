@@ -11,9 +11,10 @@ public class CollisionDetector {
 	    return false;
 	}
 	
-	public CollisionInfo scenarioAndBody(Scenario scenario, Body b, int delta){
+	/*
+	public CollisionInfo scenarioAndBody(Scenario scenario, Body b, VisualBody v, int delta){
 		CollisionInfo data = new CollisionInfo();
-		if (atraviesaLimitesPantalla(b) == true){
+		if (atraviesaLimitesPantalla(b, v) == true){
 			//ESTO ES PARA DEBUG
 			data.atraviesaLimitesPantalla = true;
 			return data;
@@ -33,30 +34,30 @@ public class CollisionDetector {
         	if (modulo(projectedMoveY) > modulo(b.speedY))
         		projectedMoveY = b.speedY;
         	
-        	if ( colisionaAlgoConTerreno(scenario, b, projectedMoveX, projectedMoveY) )
+        	if ( colisionaAlgoConTerreno(scenario, b, v, projectedMoveX, projectedMoveY) )
 	        {
-	        	while ( colisionaIzquierda(scenario, b, projectedMoveX, projectedMoveY) ){
+	        	while ( colisionaIzquierda(scenario, b, v, projectedMoveX, projectedMoveY) ){
 	        		if (projectedMoveX != (int) projectedMoveX)
 	        			projectedMoveX = (int) projectedMoveX;
 	        		else
 	        			projectedMoveX += 1;
 	        		data.contactX = true;
 	        	}
-	        	while ( colisionaDerecha(scenario, b, projectedMoveX, projectedMoveY) ){
+	        	while ( colisionaDerecha(scenario, b, v, projectedMoveX, projectedMoveY) ){
 	        		if (projectedMoveX != (int) projectedMoveX)
 	        			projectedMoveX = (int) projectedMoveX;
 	        		else
 	        			projectedMoveX -= 1;
 	        		data.contactX = true;
 	        	}
-	        	while ( colisionaBottom(scenario, b, projectedMoveX, projectedMoveY) ){
+	        	while ( colisionaBottom(scenario, b, v, projectedMoveX, projectedMoveY) ){
 	        		if (projectedMoveY != (int) projectedMoveY)
 	        			projectedMoveY = (int) projectedMoveY;
 	        		else
 	        			projectedMoveY -= 1;
 	        		data.contactYbottom = true;
 	        	}
-	        	while ( colisionaTop(scenario, b, projectedMoveX, projectedMoveY) ){
+	        	while ( colisionaTop(scenario, b, v, projectedMoveX, projectedMoveY) ){
 	        		if (projectedMoveY != (int) projectedMoveY)
 	        			projectedMoveY = (int) projectedMoveY;
 	        		else
@@ -70,45 +71,47 @@ public class CollisionDetector {
     	
         return data;
     }
+	*/
 	
-	public CollisionInfo detectContact(Scenario scenario, Body b, int delta){
+	public CollisionInfo detectContact(Scenario scenario, Body b, VisualBody v, int delta){
 		CollisionInfo info = new CollisionInfo();
-		if (atraviesaLimitesPantalla(b) == true){
+		if (atraviesaLimitesPantalla(b, v) == true){
 			//ESTO ES PARA DEBUG
 			info.atraviesaLimitesPantalla = true;
 			return info;
 		}
 		
-        if ( colisionaAlgoConTerreno(scenario, b, b.speedX, b.speedY) )
+        if ( colisionaAlgoConTerreno(scenario, b, v, b.speedX, b.speedY) )
         {
-        	while ( colisionaIzquierda(scenario, b, b.speedX, b.speedY) ){
+        	if ( colisionaIzquierda(scenario, b, v, b.speedX, b.speedY) ){
         		if (b.speedX != (int) b.speedX)
         			b.speedX = (int) b.speedX;
         		else
         			b.speedX += 1;
         		info.contactX = true;
         	}
-        	while ( colisionaDerecha(scenario, b, b.speedX, b.speedY) ){
+        	if ( colisionaDerecha(scenario, b, v, b.speedX, b.speedY) ){
         		if (b.speedX != (int) b.speedX)
         			b.speedX = (int) b.speedX;
         		else
         			b.speedX -= 1;
         		info.contactX = true;
         	}
-        	while ( colisionaBottom(scenario, b, b.speedX, b.speedY) ){
+        	if ( colisionaBottom(scenario, b, v, b.speedX, b.speedY) ){
         		if (b.speedY != (int) b.speedY)
         			b.speedY = (int) b.speedY;
         		else
         			b.speedY -= 1;
         		info.contactYbottom = true;
         	}
-        	while ( colisionaTop(scenario, b, b.speedX, b.speedY) ){
+        	if ( colisionaTop(scenario, b, v, b.speedX, b.speedY) ){
         		if (b.speedY != (int) b.speedY)
         			b.speedY = (int) b.speedY;
         		else
         			b.speedY += 1;
         		info.contactYtop = true;
         	}
+        	
         }
         
         info.moveX = b.speedX;
@@ -124,56 +127,52 @@ public class CollisionDetector {
 	 *     AUX
 	 ***************/
 	
-	private boolean colisionaAlgoConTerreno(Scenario scenario, Body pb, float xAdd, float yAdd){
+	private boolean colisionaAlgoConTerreno(Scenario scenario, Body b, VisualBody v, float xAdd, float yAdd){
 		for (int dir=0;dir<=3;dir++){
-			if (scenario.collides(pb.collisionRectangle[dir*2][0] + pb.x + xAdd, pb.collisionRectangle[dir*2][1] + pb.y + yAdd)
-				|| scenario.collides(pb.collisionRectangle[dir*2+1][0] + pb.x + xAdd, pb.collisionRectangle[dir*2+1][1] + pb.y + yAdd ) )
+			if (scenario.collides(v.collisionRectangle[dir*2][0] + b.x + xAdd, v.collisionRectangle[dir*2][1] + b.y + yAdd)
+				|| scenario.collides(v.collisionRectangle[dir*2+1][0] + b.x + xAdd, v.collisionRectangle[dir*2+1][1] + b.y + yAdd ) )
 				return true;
 		}
 		return false;
 	}
-	private boolean colisionaIzquierda(Scenario scenario, Body pb, float xAdd, float yAdd){
-		if (scenario.collides(pb.collisionRectangle[4][0] + pb.x + xAdd, pb.collisionRectangle[4][1] + pb.y + yAdd)
-			|| scenario.collides(pb.collisionRectangle[5][0] + pb.x + xAdd, pb.collisionRectangle[5][1] + pb.y + yAdd ) )
+	private boolean colisionaIzquierda(Scenario scenario, Body b, VisualBody v, float xAdd, float yAdd){
+		if (scenario.collides(v.collisionRectangle[4][0] + b.x + xAdd, v.collisionRectangle[4][1] + b.y + yAdd)
+			|| scenario.collides(v.collisionRectangle[5][0] + b.x + xAdd, v.collisionRectangle[5][1] + b.y + yAdd ) )
 			return true;
 		return false;
 	}
-	private boolean colisionaDerecha(Scenario scenario, Body pb, float xAdd, float yAdd){
-		if (scenario.collides(pb.collisionRectangle[6][0] + pb.x + xAdd, pb.collisionRectangle[6][1] + pb.y + yAdd)
-			|| scenario.collides(pb.collisionRectangle[7][0] + pb.x + xAdd, pb.collisionRectangle[7][1] + pb.y + yAdd ) )
+	private boolean colisionaDerecha(Scenario scenario, Body b, VisualBody v, float xAdd, float yAdd){
+		if (scenario.collides(v.collisionRectangle[6][0] + b.x + xAdd, v.collisionRectangle[6][1] + b.y + yAdd)
+			|| scenario.collides(v.collisionRectangle[7][0] + b.x + xAdd, v.collisionRectangle[7][1] + b.y + yAdd ) )
 			return true;
 		return false;
 	}
-	private boolean colisionaBottom(Scenario scenario, Body pb, float xAdd, float yAdd){
-		if (scenario.collides(pb.collisionRectangle[2][0] + pb.x + xAdd, pb.collisionRectangle[2][1] + pb.y + yAdd)
-			|| scenario.collides(pb.collisionRectangle[3][0] + pb.x + xAdd, pb.collisionRectangle[3][1] + pb.y + yAdd ) )
+	private boolean colisionaBottom(Scenario scenario, Body b, VisualBody v, float xAdd, float yAdd){
+		if (scenario.collides(v.collisionRectangle[2][0] + b.x + xAdd, v.collisionRectangle[2][1] + b.y + yAdd)
+			|| scenario.collides(v.collisionRectangle[3][0] + b.x + xAdd, v.collisionRectangle[3][1] + b.y + yAdd ) )
 			return true;
 		return false;
 	}
-	private boolean colisionaTop(Scenario scenario, Body pb, float xAdd, float yAdd){
-		if (scenario.collides(pb.collisionRectangle[0][0] + pb.x + xAdd, pb.collisionRectangle[0][1] + pb.y + yAdd)
-			|| scenario.collides(pb.collisionRectangle[1][0] + pb.x + xAdd, pb.collisionRectangle[1][1] + pb.y + yAdd ) )
+	private boolean colisionaTop(Scenario scenario, Body b, VisualBody v, float xAdd, float yAdd){
+		if (scenario.collides(v.collisionRectangle[0][0] + b.x + xAdd, v.collisionRectangle[0][1] + b.y + yAdd)
+			|| scenario.collides(v.collisionRectangle[1][0] + b.x + xAdd, v.collisionRectangle[1][1] + b.y + yAdd ) )
 			return true;
 		return false;
 	}
 	
-	private boolean atraviesaLimitesPantalla(Body b){
+	private boolean atraviesaLimitesPantalla(Body b, VisualBody v){
 		for (int dir=0;dir<=3;dir++){
-			if ( (b.collisionRectangle[dir*2][0] + b.x) < 0 || (b.collisionRectangle[dir*2][0] + b.x) > 320
-			  || (b.collisionRectangle[dir*2+1][0] + b.x) < 0 || (b.collisionRectangle[dir*2+1][0] + b.x) > 320
-			  || (b.collisionRectangle[dir*2][1] + b.y) < 0 || (b.collisionRectangle[dir*2][1] + b.y) > 480 
-			  || (b.collisionRectangle[dir*2+1][1] + b.y) < 0 ||(b.collisionRectangle[dir*2+1][1] + b.y ) > 480)
+			if ( (v.collisionRectangle[dir*2][0] + b.x) < 0 || (v.collisionRectangle[dir*2][0] + b.x) > 320
+			  || (v.collisionRectangle[dir*2+1][0] + b.x) < 0 || (v.collisionRectangle[dir*2+1][0] + b.x) > 320
+			  || (v.collisionRectangle[dir*2][1] + b.y) < 0 || (v.collisionRectangle[dir*2][1] + b.y) > 480 
+			  || (v.collisionRectangle[dir*2+1][1] + b.y) < 0 ||(v.collisionRectangle[dir*2+1][1] + b.y ) > 480)
 				return true;
 		}
 		return false;
 	}
 	
-	private int ceil(float v){
-		return (int)  Math.ceil(v);
-	}
-	private int floor(float v){
-		return (int)  Math.floor(v);
-	}
+	
+	
 	private float modulo(float v){
 		if (v >= 0)
 			return v;

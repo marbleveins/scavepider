@@ -33,56 +33,56 @@ public class CollisionSolver {
 	public void solve(Player player, CollisionInfo info){
 	    if ( info.atraviesaLimitesPantalla == true ){
 	    	//ESTO ES PARA DEBUG
-	    	resetPos(player.body);
+	    	resetPos(player.b);
 	    	return;
 	    }
 		//que caiga si esta saltando y choca con techo y pared a la vez. esquina
-		if (info.contactX && info.contactYtop && player.body.speedY < 0)
-			player.body.speedY = info.moveY = 0;
+		if (info.contactX && info.contactYtop && player.b.speedY < 0)
+			player.b.speedY = info.moveY = 0;
         
         if (info.contactYbottom || info.contactYtop)
         {
-        	player.body.y += info.moveY;
-        	player.body.speedY = 0;
+        	player.b.y += info.moveY;
+        	player.b.speedY = 0;
         	//se mueve hasta que colisiona y se pone en 0 para que no siga yendo para ese lado
         	if (info.contactYbottom)
-        		player.body.standing = true;
+        		player.b.standing = true;
         }
-        if (player.body.speedY == 0)
-        	player.body.jumping = false;
+        if (player.b.speedY == 0)
+        	player.b.jumping = false;
         
         if (info.contactX)
         {
-        	player.body.x += info.moveX;
-        	player.body.speedX = 0;
+        	player.b.x += info.moveX;
+        	player.b.speedX = 0;
         }
 	}
 	
 	public void solve(Bicho bicho, CollisionInfo info){
 	    if ( info.atraviesaLimitesPantalla == true ){
 	    	//ESTO ES PARA DEBUG
-	    	resetPos(bicho.body);
+	    	resetPos(bicho.b);
 	    	return;
 	    }
 		//que caiga si esta saltando y choca con techo y pared a la vez. esquina
-		if (info.contactX && info.contactYtop && bicho.body.speedY < 0)
-			bicho.body.speedY = info.moveY = 0;
+		if (info.contactX && info.contactYtop && bicho.b.speedY < 0)
+			bicho.b.speedY = info.moveY = 0;
         
         if (info.contactYbottom || info.contactYtop)
         {
-        	bicho.body.y += info.moveY;
-        	bicho.body.speedY = 0;
+        	bicho.b.y += info.moveY;
+        	bicho.b.speedY = 0;
         	//se mueve hasta que colisiona y se pone en 0 para que no siga yendo para ese lado
         	if (info.contactYbottom)
-        		bicho.body.standing = true;
+        		bicho.b.standing = true;
         }
-        if (bicho.body.speedY == 0)
-        	bicho.body.jumping = false;
+        if (bicho.b.speedY == 0)
+        	bicho.b.jumping = false;
         
         if (info.contactX)
         {
-        	bicho.body.x += info.moveX;
-        	bicho.body.speedX = 0;
+        	bicho.b.x += info.moveX;
+        	bicho.b.speedX = 0;
         }
 	}
 	

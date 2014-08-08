@@ -1,5 +1,7 @@
 package game;
 
+import game.Enum.TipoBicho;
+
 import org.newdawn.slick.AppGameContainer;
 import org.newdawn.slick.BasicGame;
 import org.newdawn.slick.GameContainer;
@@ -21,7 +23,7 @@ public class Game extends BasicGame{
     private Scenario scenario;
     private Player player;
     private Controller controller;
-    
+    private FabricaDePlayers fabricaPlayers = new FabricaDePlayers();
     
     public Game() {
 		super(GAME_NAME);
@@ -32,7 +34,7 @@ public class Game extends BasicGame{
 		screen = new Image(WINDOW_WIDTH, WINDOW_HEIGTH);
 		controller = new Controller();
 		scenario = new Scenario("map1");
-		player = new Player(87, 5, scenario);
+		player = fabricaPlayers.makePlayer(87, 5, scenario, TipoBicho.Player);
 	}
     
 	@Override
@@ -49,8 +51,8 @@ public class Game extends BasicGame{
 		
 		//debug inScreenInfo
 		g.drawString("state: " + player.state,50,50);
-		g.drawString("speedX: " + player.body.speedX,50,62);
-		g.drawString("speedY: " + player.body.speedY,50,74);
+		g.drawString("speedX: " + player.b.speedX,50,62);
+		g.drawString("speedY: " + player.b.speedY,50,74);
 		
 		g.drawString("(" + (container.getInput().getMouseX()/SCALE) + ", " + (container.getInput().getMouseY()/SCALE) + ")",1*SCALE,466*SCALE);
 	}

@@ -14,5 +14,9 @@ public class Enum {
     public enum TipoPixel {
         CENTRO, TECHO, PISO, IZQ, DER, EsqArrIzq, EsqArrDer, EsqAbIzq, EsqAbDer
     };
+    
+    public enum TipoBicho {
+    	Player, AÒBebe, AÒAdulta
+    };
 	
 }

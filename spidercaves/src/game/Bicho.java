@@ -2,58 +2,29 @@ package game;
 
 import game.Enum.Facing;
 import game.Enum.State;
-
-import java.util.HashMap;
-
-import org.newdawn.slick.Color;
 import org.newdawn.slick.Graphics;
-import org.newdawn.slick.Image;
-import org.newdawn.slick.Input;
-import org.newdawn.slick.SlickException;
 
 public class Bicho {
-	public Body body;
-	private int SPRITE_SIZE = 32;
-	private static final String SPRITES_FOLDER = "data/bicho/";
-	private HashMap<Facing, Image> sprites;
-	private Facing facing;
-	State state;
+	public Body b;
+	public VisualBody v;
 	private Scenario scenario;
 	private Player target;//cualquier cosa viva en realidad
 	/**0=floor, 1=ceil, 2=Lwall, 3 = Rwall**/
 	private int walkingIn;
-	
+	private boolean alive = true;
 	
 	
 	public Bicho(float x, float y, Scenario _scenario){
-		body = new Body();
-    	body.collisionRectangle = getCollisionRectangle();
-    	body.x = x;
-        body.y = y;
-        body.accelX = 0.4f;
-        body.decelX = 0.8f;
-        body.maxSpeedX = 10;
-        body.maxSpeedY = 25;
-        body.jumpStartSpeedY = 15;
-        
+		b = new Body();
+    	b.x = x;
+        b.y = y;
         scenario = _scenario;
-        
-        facing = Facing.RIGHT;
-        state = State.FallingR;
-        
-		try {
-			getSprites();
-		} catch (SlickException e) {
-			e.printStackTrace();
-		}
-		
 	}
 	
 	public void render(Graphics screenG){
-		sprites.get(facing).draw(body.x, body.y);
-        screenG.drawImage(sprites.get(facing), body.x, body.y);
+		v.sprites.get(v.facing).draw(b.x, b.y);
+        screenG.drawImage(v.sprites.get(v.facing), b.x, b.y);
     }
-	
 	
 	public void nextMove(Player player, int delta){
 		if (distanceTo(player) < 30)
@@ -61,21 +32,31 @@ public class Bicho {
 		else
 			target = null;
 		
-        if (body.speedY < 0){
-        	body.jumping = false;
-        	body.standing = false;
-        	body.falling = true;
+        if (b.speedY > 0){
+        	b.jumping = false;
+        	b.standing = false;
+        	b.falling = true;
         }
         
 		if (target != null){
-			if ( body.standing && !body.jumping)
+			if ( b.standing && !b.jumping)
 	        {
-	            state = (facing == Facing.RIGHT)?State.JumpingR:State.JumpingL;
-	            body.standing = false;
-	            body.jumping = true;
-	            this.body.speedY = -this.body.jumpStartSpeedY;
+	            v.state = (v.facing == Facing.RIGHT)?State.JumpingR:State.JumpingL;
+	            b.standing = false;
+	            b.jumping = true;
+	            this.b.speedY = -this.b.jumpStartSpeedY;
 	        }
 		}
+		
+		if (b.speedX > b.maxSpeedX) b.speedX = b.maxSpeedX;
+        if (b.speedX < -b.maxSpeedX) b.speedX = -b.maxSpeedX;
+        if (b.speedY < -b.maxSpeedY) b.speedY = -b.maxSpeedY;
+        if (b.speedY > b.maxSpeedY) b.speedY = b.maxSpeedY;
+
+        b.speedY += scenario.gravity;
+        if (b.speedY > scenario.gravity){
+        	v.state = (v.facing == Facing.RIGHT)?State.FallingR:State.FallingL;
+        }
         
 	}
 	
@@ -86,66 +67,29 @@ public class Bicho {
 	 *       AUX
 	 *********************/
 	
-	private void getSprites() throws SlickException{
-	    sprites = new HashMap<Facing,Image>();
-	    sprites.put(Facing.RIGHT, takeBG(new Image(SPRITES_FOLDER + "1.png")));
-	    sprites.put(Facing.LEFT , takeBG(new Image(SPRITES_FOLDER + "1.png")).getFlippedCopy(true, false));
-        
-    }
 	
-	/**setea transparente el background. setea transparentes los puntos iguales al (0,0) de la imagen*/
-	private Image takeBG(Image img) throws SlickException{
-		//NO SE PUEDE CAMBIAR UN COLOR QUE YA ESTA A TRANSPARENTE
-		//SOLO ME QUEDA HACER UNA NUEVA Y DIBUJAR SIN EL FONDO
-    	Image result = new Image(SPRITE_SIZE,SPRITE_SIZE);
-		Graphics g = result.getGraphics();
-		g.setColor(Color.transparent);
-		g.fillRect(0,0,SPRITE_SIZE,SPRITE_SIZE);
-		Color backGround = img.getColor(0, 0);
-		for (int y=0 ; y<SPRITE_SIZE ; y++){
-         	for (int x=0 ; x<SPRITE_SIZE ; x++){
-         		if ( img.getColor(x, y).r != backGround.r || img.getColor(x, y).g != backGround.g || img.getColor(x, y).b != backGround.b ){
-         			g.setColor( img.getColor(x, y) );
-         			g.fillRect(x, y, 1, 1);
-         		}
-            }
-        }
-		g.flush();//IMPORTANT!!!
-    	return result;
-    }
-	
-	private int [][] getCollisionRectangle(){
-    	int points[][] = {
-    	        { 12,  3  }, { 18, 3  }, // Top of head
-    	        { 12,  31 }, { 18, 31 }, // Feet
-    	        { 12,  10 }, { 12,  25 }, // Left arm
-    	        { 18, 10 }, { 18, 25 }  // Right arm
-    	};
-    	return points;
-    }
-
 	private float distanceTo(Player player){
 		float px_closest = 0;
 		float py_closest = 0;
 		float bx_closest = 0;
 		float by_closest = 0;
 		
-		if ( (player.body.x + player.SPRITE_SIZE) < this.body.x || (player.body.x + player.SPRITE_SIZE) == this.body.x ){
-			px_closest = player.body.x + player.SPRITE_SIZE;
-			bx_closest = this.body.x;
+		if ( (player.b.x + player.SPRITE_SIZE) < this.b.x || (player.b.x + player.SPRITE_SIZE) == this.b.x ){
+			px_closest = player.b.x + player.SPRITE_SIZE;
+			bx_closest = this.b.x;
 		}
-		if ( player.body.x > (this.body.x + this.SPRITE_SIZE) || player.body.x == (this.body.x + this.SPRITE_SIZE) ){
-			px_closest = player.body.x;
-			bx_closest = this.body.x + this.SPRITE_SIZE;
+		if ( player.b.x > (this.b.x + v.SPRITE_WIDTH) || player.b.x == (this.b.x + v.SPRITE_WIDTH) ){
+			px_closest = player.b.x;
+			bx_closest = this.b.x + v.SPRITE_WIDTH;
 		}
 		
-		if ( (player.body.y + player.SPRITE_SIZE) < this.body.y || (player.body.y + player.SPRITE_SIZE) == this.body.y ){
-			py_closest = player.body.y + player.SPRITE_SIZE;
-			by_closest = this.body.y;
+		if ( (player.b.y + player.SPRITE_SIZE) < this.b.y || (player.b.y + player.SPRITE_SIZE) == this.b.y ){
+			py_closest = player.b.y + player.SPRITE_SIZE;
+			by_closest = this.b.y;
 		}
-		if ( player.body.y > (this.body.y + this.SPRITE_SIZE) || player.body.y == (this.body.y + this.SPRITE_SIZE) ){
-			py_closest = player.body.y;
-			by_closest = this.body.y + this.SPRITE_SIZE;
+		if ( player.b.y > (this.b.y + v.SPRITE_HEIGHT) || player.b.y == (this.b.y + v.SPRITE_HEIGHT) ){
+			py_closest = player.b.y;
+			by_closest = this.b.y + v.SPRITE_HEIGHT;
 		}
 		
 		return (float) Math.sqrt((px_closest-bx_closest) * (px_closest-bx_closest) + (py_closest-by_closest) * (py_closest-by_closest));

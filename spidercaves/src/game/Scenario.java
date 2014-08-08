@@ -18,12 +18,22 @@ public class Scenario {
 	public static final int SCREENWIDTH = 320;
 	public static final int SCREENHEIGHT = 480;
 	public static final int TILESIZE = 16;
-	public String levelName;
+	private String levelName;
 	public float gravity;
-	public Vector<String[]> tilesMap;
-	public Vector<Image> tiles;
+	private Vector<String[]> tilesMap;
+	private Vector<Image> tiles;
 	public HashMap<Integer, HashMap<Integer, TipoPixel>> collisionPoints;
+	
 	public Vector<Proyectil> proyectiles;
+	public Vector<Bicho> bichos;
+	public Player player;
+	
+	//////////
+	private BichosController bichosController = new BichosController();
+	
+	
+	//////////
+	
 	
 	public Scenario(String _levelName){
 		levelName = _levelName;
@@ -42,6 +52,8 @@ public class Scenario {
 		
 		collisionPoints = getCollisionPoints();
 		proyectiles = new Vector<Proyectil>();
+		bichos = new Vector<Bicho>();
+		
 	}
 	
 	public void render(GameContainer container, Graphics g, Graphics screenG){
@@ -63,6 +75,14 @@ public class Scenario {
 		    	proyectiles.get(i).render(screenG);
 		    }
 	    }
+	    
+	    //bichos
+	    if (bichos != null && bichos.size() > 0){
+	    	for (int i=0; i < bichos.size(); i++){
+		    	if (bichos.get(i) == null) continue;
+		    	bichos.get(i).render(screenG);
+		    }
+	    }
 	}
 	
 	public void update(GameContainer container, int delta){
@@ -77,7 +97,12 @@ public class Scenario {
 		    }
 	    }
 	    
+	    bichosController.update(this, delta);
+	    
 	}
+	
+	
+	
 	
 	private Vector<String[]> getTilesMap() throws FileNotFoundException{
 		Vector<String[]> result = new Vector<String[]>();
