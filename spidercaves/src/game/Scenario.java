@@ -5,9 +5,11 @@ import game.Enum.TipoPixel;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.Vector;
 
+import org.newdawn.slick.Color;
 import org.newdawn.slick.GameContainer;
 import org.newdawn.slick.Graphics;
 import org.newdawn.slick.Image;
@@ -51,12 +53,13 @@ public class Scenario {
 		}
 		
 		collisionPoints = getCollisionPoints();
+		setTipoPixel();
 		proyectiles = new Vector<Proyectil>();
 		bichos = new Vector<Bicho>();
 		
 	}
 	
-	public void render(GameContainer container, Graphics g, Graphics screenG){
+	public void render(GameContainer container, Graphics g, Graphics screenG, boolean debugMode){
 		//mapa
 	    for (int y=1 ; y<=tilesMap.size() ; y++)
 	    {
@@ -66,6 +69,21 @@ public class Scenario {
 	            //tile.draw((x-1)*TILESIZE, (y-1)*TILESIZE);
 	            screenG.drawImage(tile, (x-1)*TILESIZE, (y-1)*TILESIZE);
 	        }
+	    }
+	    
+	    //collision Map
+	    if (debugMode){
+		    for (Map.Entry<Integer, HashMap<Integer, TipoPixel>> outside : collisionPoints.entrySet()){
+		    	for (Map.Entry<Integer, TipoPixel> inside : outside.getValue().entrySet()){
+		    		if (inside.getValue() == TipoPixel.CENTRO)
+		    			screenG.setColor(Color.pink);
+		    		else if ( inside.getValue() == TipoPixel.PISO )
+		    			screenG.setColor(Color.blue);
+		    		else
+		    			screenG.setColor(Color.cyan);
+		            screenG.fillRect(outside.getKey(), inside.getKey(), 1, 1);
+		    	}
+		    }
 	    }
 	    
 	    //proyectiles
@@ -160,11 +178,7 @@ public class Scenario {
 	}
 	
 	private HashMap<Integer, HashMap<Integer, TipoPixel>> getCollisionPoints(){
-		/**
-	    *   uno para cada tipo de tile? no jodas, RE-IMPLEMENTAR
-	    *   tiles por tipo, clases
-	    **/
-		HashMap<Integer, HashMap<Integer, TipoPixel>> result = new HashMap<Integer, HashMap<Integer, TipoPixel>>();;
+		HashMap<Integer, HashMap<Integer, TipoPixel>> result = new HashMap<Integer, HashMap<Integer, TipoPixel>>();
 	    for (int l=0; l < tilesMap.size(); l++)
 	    {
 	        for (int c=0; c < tilesMap.elementAt(l).length; c++)
@@ -179,7 +193,7 @@ public class Scenario {
 	                    {
 	                        if (result.get(x+(c*TILESIZE)) == null)
 	                        	result.put(x+(c*TILESIZE), new HashMap<Integer, TipoPixel>());
-	                        result.get( x+(c*TILESIZE) ).put( y+(l*TILESIZE), getTipoPx(x, y, tilesMap.elementAt(l)[c]) );
+	                        result.get( x+(c*TILESIZE) ).put( y+(l*TILESIZE), TipoPixel.CENTRO );
 	                    }
 	                }
 
@@ -282,6 +296,48 @@ public class Scenario {
 	    }
 	    return result;
 	}
+	
+	private void setTipoPixel(){
+		boolean arr;
+		boolean aba;
+		boolean izq;
+		boolean der;
+		for ( Map.Entry<Integer, HashMap<Integer, TipoPixel>> x : collisionPoints.entrySet() ){
+			for ( Map.Entry<Integer, TipoPixel> y : x.getValue().entrySet() ){
+				arr = false;
+				aba = false;
+				izq = false;
+				der = false;
+				
+				if ( collisionPoints.get(x.getKey()).containsKey(y.getKey()-1) )
+					arr = true;
+				if ( collisionPoints.get(x.getKey()).containsKey(y.getKey()+1) )
+					aba = true;
+				if ( collisionPoints.containsKey(x.getKey()-1) && collisionPoints.get(x.getKey()-1).containsKey(y.getKey()) )
+					izq = true;
+				if ( collisionPoints.containsKey(x.getKey()+1) && collisionPoints.get(x.getKey()+1).containsKey(y.getKey()) )
+					der = true;
+				
+				if (!arr && !izq && aba && der)
+					x.getValue().put(y.getKey(),TipoPixel.EsqArrIzq);
+				if (!arr && !der && aba && izq)
+					x.getValue().put(y.getKey(),TipoPixel.EsqArrDer);
+				if (!aba && !izq && arr && der)
+					x.getValue().put(y.getKey(),TipoPixel.EsqAbIzq);
+				if (!aba && !der && arr && izq)
+					x.getValue().put(y.getKey(),TipoPixel.EsqAbDer);
+				if (!arr && aba && izq && der)
+					x.getValue().put(y.getKey(),TipoPixel.PISO);
+				if (!aba && arr && izq && der)
+					x.getValue().put(y.getKey(),TipoPixel.TECHO);
+				if (!izq && arr && aba && der)
+					x.getValue().put(y.getKey(),TipoPixel.DER);
+				if (!der && arr && aba && izq)
+					x.getValue().put(y.getKey(),TipoPixel.IZQ);
+				
+			}
+		}
+	}
 
 	public boolean collides(float x, float y)
 	{
@@ -291,12 +347,6 @@ public class Scenario {
 	    return false;
 	}
 	
-	private int ceil(float v){
-		return (int)  Math.ceil(v);
-	}
-	private int floor(float v){
-		return (int)  Math.floor(v);
-	}
 	private float modulo(float v){
 		if (v >= 0)
 			return v;

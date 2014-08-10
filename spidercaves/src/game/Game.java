@@ -16,6 +16,7 @@ public class Game extends BasicGame{
     public static final int WINDOW_HEIGTH = 480;
     private int SCALE = 1;
     private boolean scaleChanged = false;
+    private boolean debugMode = false;
     private Image screen;
     private int frames;
     private long miliseconds;
@@ -44,7 +45,7 @@ public class Game extends BasicGame{
 			scaleChanged = false;
 	        ((AppGameContainer) container).setDisplayMode(WINDOW_WIDTH*SCALE, WINDOW_HEIGTH*SCALE, false);
 		}
-		scenario.render(container, g, screenG);
+		scenario.render(container, g, screenG, debugMode);
 		player.render(screenG);
 		screenG.flush();
 		screen.draw(0,0, SCALE);
@@ -82,6 +83,12 @@ public class Game extends BasicGame{
 			SCALE = 2;
 			scaleChanged = true;
         }
+		
+		if ( container.getInput().isKeyDown(Input.KEY_3) && miliseconds +200 < System.currentTimeMillis() ) {
+			debugMode = !debugMode;
+			miliseconds = System.currentTimeMillis();
+        }
+		
 		if ( container.getInput().isKeyDown(Input.KEY_SPACE) && miliseconds +40 < System.currentTimeMillis() ) {
 			if (frames == 30)
 				frames = 5;

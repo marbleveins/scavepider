@@ -2,7 +2,7 @@ package game;
 
 
 public class Body {
-	public float x, y, speedX, speedY;
+	public float x, y, speedX, speedY, moveXrequest, moveYrequest;
     float accelX, decelX, maxSpeedX, maxSpeedY, jumpStartSpeedY;
     public boolean jumping, standing, falling;
     

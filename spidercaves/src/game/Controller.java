@@ -22,6 +22,10 @@ public class Controller {
 	{
 		handleKeyBoardInput(container, delta, scale, player);
 		//handleBichosIntelligence?
+		/*
+		player.b.moveXrequest = player.b.speedX;
+		player.b.moveYrequest = player.b.speedY;
+		player.b.speedX*/
 		
 		manageCollisions(container, delta, scenario, player);
 		
@@ -49,7 +53,7 @@ public class Controller {
 	
 	private void playerCollision(Scenario scenario, Player player, int delta, int segmentos){
 		//consigue la colision de cada objeputs en este segmento del movimiento entero
-		CollisionInfo data = detector.detectContact(scenario, player.b, player.v, delta);
+		CollisionInfo data = detector.detectContact(scenario, player.b, player.v, delta, segmentos);
 		
 		//resuelve si tienen colision y encamina
 		solver.solve(player.b, data);
@@ -60,7 +64,7 @@ public class Controller {
 	}
 	private void bichoCollision(Scenario scenario, Bicho bicho, int delta, int segmentos){
 		//consigue la colision de cada objeputs en este segmento del movimiento entero
-		CollisionInfo data = detector.detectContact(scenario, bicho.b, bicho.v, delta);
+		CollisionInfo data = detector.detectContact(scenario, bicho.b, bicho.v, delta, segmentos);
 		
 		//resuelve si tienen colision y encamina
 		solver.solve(bicho.b, data);

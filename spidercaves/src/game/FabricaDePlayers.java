@@ -123,13 +123,23 @@ public class FabricaDePlayers {
 		g.flush();//IMPORTANT!!!
     	return result;
     }
-	
+	/*
 	private int [][] getCollisionRectangle(){
     	int points[][] = {
     	        { 12,  3  }, { 18, 3  }, // Top of head
     	        { 12,  31 }, { 18, 31 }, // Feet
     	        { 12,  10 }, { 12,  25 }, // Left arm
     	        { 18, 10 }, { 18, 25 }  // Right arm
+    	};
+    	return points;
+    }
+	*/
+	private int [][] getCollisionRectangle(){
+    	int points[][] = {
+    	        { 12,  3  }, { 18, 3  }, // Top of head
+    	        { 12,  31 }, { 18, 31 }, // Feet
+    	        { 12,  4 }, { 12,  30 }, // Left arm
+    	        { 18, 4 }, { 18, 30 }  // Right arm
     	};
     	return points;
     }

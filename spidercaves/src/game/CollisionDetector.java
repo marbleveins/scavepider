@@ -1,14 +1,16 @@
 package game;
 
+import game.Enum.TipoPixel;
+
 public class CollisionDetector {
 
 	
-	public boolean colisiona(Scenario scenario, float x, float y)
+	public TipoPixel colisiona(Scenario scenario, float x, float y)
 	{
 		//(int) porque es por pixels y el pixel 5 es del 5.0 hasta el 5.9
 	    if (scenario.collisionPoints.containsKey((int)x) == true && scenario.collisionPoints.get((int)x).get((int)y) != null)
-	        return true;
-	    return false;
+	        return ( scenario.collisionPoints.get((int)x).get((int)y) );
+	    return TipoPixel.NULL;
 	}
 	
 	/*
@@ -72,8 +74,8 @@ public class CollisionDetector {
         return data;
     }
 	*/
-	
-	public CollisionInfo detectContact(Scenario scenario, Body b, VisualBody v, int delta){
+	/*
+	public CollisionInfo detectContact(Scenario scenario, Body b, VisualBody v, int delta, int segmentos){
 		CollisionInfo info = new CollisionInfo();
 		if (atraviesaLimitesPantalla(b, v) == true){
 			//ESTO ES PARA DEBUG
@@ -119,7 +121,68 @@ public class CollisionDetector {
     	
         return info;
     }
+	*/
 	
+	public CollisionInfo detectContact(Scenario scenario, Body b, VisualBody v, int delta, int segmentos){
+		CollisionInfo info = new CollisionInfo();
+		if (atraviesaLimitesPantalla(b, v) == true){
+			//ESTO ES PARA DEBUG
+			info.atraviesaLimitesPantalla = true;
+			return info;
+		}
+		
+        if ( colisionaAlgoConTerreno(scenario, b, v, b.speedX/segmentos, b.speedY/segmentos) )
+        {
+        	//si hay jitter agregar (int) player.b.x y eso
+        	switch (tipoDeColision(scenario, b, v, b.speedX/segmentos, b.speedY/segmentos)){
+	        	case PISO:
+	        		info.contactYbottom = true;
+	        		break;
+	        		
+	        	case TECHO:
+	        		info.contactYtop = true;
+	        		break;
+	        		
+	        	case IZQ:
+	        		info.contactX = true;
+	        		break;
+	        		
+	        	case DER:
+	        		info.contactX = true;
+	        		break;
+	        		
+	        	case EsqArrIzq:
+	        		info.contactYtop = true;
+	        		info.contactX = true;
+	        		break;
+	        		
+	        	case EsqArrDer:
+	        		info.contactYtop = true;
+	        		info.contactX = true;
+	        		break;
+	        		
+	        	case EsqAbIzq:
+	        		info.contactYbottom = true;
+	        		info.contactX = true;
+	        		break;
+	        		
+	        	case EsqAbDer:
+	        		info.contactYbottom = true;
+	        		info.contactX = true;
+	        		break;
+	        		
+	        	case CENTRO:
+	        		break;
+	        	case NULL:
+	        		break;
+        	}
+        }
+        
+        info.moveX = b.speedX;
+    	info.moveY = b.speedY;
+    	
+        return info;
+    }
 	
 	
 	
@@ -127,35 +190,50 @@ public class CollisionDetector {
 	 *     AUX
 	 ***************/
 	
-	private boolean colisionaAlgoConTerreno(Scenario scenario, Body b, VisualBody v, float xAdd, float yAdd){
+	
+	private TipoPixel tipoDeColision(Scenario scenario, Body b, VisualBody v, float xAdd, float yAdd){
+		//para los 8 puntos de colision, cabeza, pies y brazo I & D
 		for (int dir=0;dir<=3;dir++){
-			if (scenario.collides(v.collisionRectangle[dir*2][0] + b.x + xAdd, v.collisionRectangle[dir*2][1] + b.y + yAdd)
-				|| scenario.collides(v.collisionRectangle[dir*2+1][0] + b.x + xAdd, v.collisionRectangle[dir*2+1][1] + b.y + yAdd ) )
+			if (colisiona(scenario, v.collisionRectangle[dir*2][0] + b.x + xAdd, v.collisionRectangle[dir*2][1] + b.y + yAdd) != TipoPixel.NULL )
+				return ( colisiona(scenario, v.collisionRectangle[dir*2][0] + b.x + xAdd, v.collisionRectangle[dir*2][1] + b.y + yAdd) );
+			if ( colisiona(scenario, v.collisionRectangle[dir*2+1][0] + b.x + xAdd, v.collisionRectangle[dir*2+1][1] + b.y + yAdd ) != TipoPixel.NULL )
+				return ( colisiona(scenario, v.collisionRectangle[dir*2+1][0] + b.x + xAdd, v.collisionRectangle[dir*2+1][1] + b.y + yAdd ) );
+			
+			
+		}
+		return TipoPixel.NULL;
+	}
+	
+	private boolean colisionaAlgoConTerreno(Scenario scenario, Body b, VisualBody v, float xAdd, float yAdd){
+		//para los 8 puntos de colision, cabeza, pies y brazo I & D
+		for (int dir=0;dir<=3;dir++){
+			if (colisiona(scenario, v.collisionRectangle[dir*2][0] + b.x + xAdd, v.collisionRectangle[dir*2][1] + b.y + yAdd) != TipoPixel.NULL
+				|| colisiona(scenario, v.collisionRectangle[dir*2+1][0] + b.x + xAdd, v.collisionRectangle[dir*2+1][1] + b.y + yAdd ) != TipoPixel.NULL )
 				return true;
 		}
 		return false;
 	}
 	private boolean colisionaIzquierda(Scenario scenario, Body b, VisualBody v, float xAdd, float yAdd){
-		if (scenario.collides(v.collisionRectangle[4][0] + b.x + xAdd, v.collisionRectangle[4][1] + b.y + yAdd)
-			|| scenario.collides(v.collisionRectangle[5][0] + b.x + xAdd, v.collisionRectangle[5][1] + b.y + yAdd ) )
+		if (colisiona(scenario, v.collisionRectangle[4][0] + b.x + xAdd, v.collisionRectangle[4][1] + b.y + yAdd) != TipoPixel.NULL
+			|| colisiona(scenario, v.collisionRectangle[5][0] + b.x + xAdd, v.collisionRectangle[5][1] + b.y + yAdd ) != TipoPixel.NULL )
 			return true;
 		return false;
 	}
 	private boolean colisionaDerecha(Scenario scenario, Body b, VisualBody v, float xAdd, float yAdd){
-		if (scenario.collides(v.collisionRectangle[6][0] + b.x + xAdd, v.collisionRectangle[6][1] + b.y + yAdd)
-			|| scenario.collides(v.collisionRectangle[7][0] + b.x + xAdd, v.collisionRectangle[7][1] + b.y + yAdd ) )
+		if (colisiona(scenario, v.collisionRectangle[6][0] + b.x + xAdd, v.collisionRectangle[6][1] + b.y + yAdd) != TipoPixel.NULL
+			|| colisiona(scenario, v.collisionRectangle[7][0] + b.x + xAdd, v.collisionRectangle[7][1] + b.y + yAdd ) != TipoPixel.NULL )
 			return true;
 		return false;
 	}
 	private boolean colisionaBottom(Scenario scenario, Body b, VisualBody v, float xAdd, float yAdd){
-		if (scenario.collides(v.collisionRectangle[2][0] + b.x + xAdd, v.collisionRectangle[2][1] + b.y + yAdd)
-			|| scenario.collides(v.collisionRectangle[3][0] + b.x + xAdd, v.collisionRectangle[3][1] + b.y + yAdd ) )
+		if (colisiona(scenario, v.collisionRectangle[2][0] + b.x + xAdd, v.collisionRectangle[2][1] + b.y + yAdd) != TipoPixel.NULL
+			|| colisiona(scenario, v.collisionRectangle[3][0] + b.x + xAdd, v.collisionRectangle[3][1] + b.y + yAdd ) != TipoPixel.NULL )
 			return true;
 		return false;
 	}
 	private boolean colisionaTop(Scenario scenario, Body b, VisualBody v, float xAdd, float yAdd){
-		if (scenario.collides(v.collisionRectangle[0][0] + b.x + xAdd, v.collisionRectangle[0][1] + b.y + yAdd)
-			|| scenario.collides(v.collisionRectangle[1][0] + b.x + xAdd, v.collisionRectangle[1][1] + b.y + yAdd ) )
+		if (colisiona(scenario, v.collisionRectangle[0][0] + b.x + xAdd, v.collisionRectangle[0][1] + b.y + yAdd) != TipoPixel.NULL
+			|| colisiona(scenario, v.collisionRectangle[1][0] + b.x + xAdd, v.collisionRectangle[1][1] + b.y + yAdd ) != TipoPixel.NULL )
 			return true;
 		return false;
 	}
@@ -180,5 +258,6 @@ public class CollisionDetector {
 			return -1*v;
 	}
 	
-	//EOF
+	
+///////////////////////EOF
 }

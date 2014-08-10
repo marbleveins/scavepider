@@ -12,7 +12,7 @@ public class Enum {
     };
     
     public enum TipoPixel {
-        CENTRO, TECHO, PISO, IZQ, DER, EsqArrIzq, EsqArrDer, EsqAbIzq, EsqAbDer
+        CENTRO, TECHO, PISO, IZQ, DER, EsqArrIzq, EsqArrDer, EsqAbIzq, EsqAbDer, NULL
     };
     
     public enum TipoBicho {
